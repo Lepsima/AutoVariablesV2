@@ -50,9 +50,10 @@ public struct Position2 : IAutoUnit2 {
 
     public static Position2 operator +(Position2 a, Position2 b) => new(a.x + b.x, a.y + b.y);
     public static Position2 operator -(Position2 a, Position2 b) => new(a.x - b.x, a.y - b.y);
+    
     public static Position2 operator *(Position2 a, Position2 b) => new(a.x * b.x, a.y * b.y);
     public static Position2 operator /(Position2 a, Position2 b) => new(a.x / b.x, a.y / b.y);
-
+    
     public static Position2 operator +(Velocity2 a, Position2 b) => b + a.Position2(VTime.deltaTime);
     public static Position2 operator +(Position2 b, Velocity2 a) => b + a.Position2(VTime.deltaTime);
     public static Position2 operator -(Velocity2 a, Position2 b) => a.Position2(VTime.deltaTime) - b;
@@ -60,7 +61,15 @@ public struct Position2 : IAutoUnit2 {
     
     public Velocity2 Velocity2(Time v) => new(x / v, y / v);
     public Time Time(Velocity2 v) => new(magnitude / v.magnitude);
+
     public Position2(Velocity2 a, Time b) => a.Position2(b);
     public Position2(Time b, Velocity2 a) => a.Position2(b);
+
+    public Torque2 Torque2(Force2 v) => new(v.x * x, v.y * y);
+    public Force2 Force2(Torque2 v) => new(v.x / x, v.y / y);
+
+    public Position2(Torque2 a, Force2 b) => a.Position2(b);
+    public Position2(Force2 b, Torque2 a) => a.Position2(b);
+
 }
 }

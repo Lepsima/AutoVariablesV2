@@ -28,10 +28,13 @@ public struct Force : IAutoUnit {
 
     public static Force operator +(Force a, Force b) => new(a.x + b.x);
     public static Force operator -(Force a, Force b) => new(a.x - b.x);
+    
     public static Force operator *(Force a, Force b) => new(a.x * b.x);
     public static Force operator /(Force a, Force b) => new(a.x / b.x);
+    
     public Accel Accel(Mass v) => new(x / v);
     public Mass Mass(Accel v) => new(x / v);
+
     public Force(Accel a, Mass b) => a.Force(b);
     public Force(Mass b, Accel a) => a.Force(b);
 
@@ -42,7 +45,15 @@ public struct Force : IAutoUnit {
     
     public ForceAccel ForceAccel(Time v) => new(x / v);
     public Time Time(ForceAccel v) => new(x / v);
+
     public Force(ForceAccel a, Time b) => a.Force(b);
     public Force(Time b, ForceAccel a) => a.Force(b);
+
+    public Torque Torque(Position v) => new(v.x * x);
+    public Position Position(Torque v) => new(v.x / x);
+
+    public Force(Torque a, Position b) => a.Force(b);
+    public Force(Position b, Torque a) => a.Force(b);
+
 }
 }

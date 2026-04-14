@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -14,258 +12,136 @@ namespace ClassGenerator;
 
 [Generator]
 public class ClassGenerator : IIncrementalGenerator {
-	private static readonly List<(string, List<(string, string, double)>)> unitScales = [
-		// Utils
-		("Direction", [
-			("dir", "Normal", 1),
-		]),
-		("Magnitude", [
-			("mag", "Number", 1),
-		]),
-		
-		// Base units
-		("Time", [
-			("μs", "Microsecond", 0.000001),
-			("ms", "Millisecond", 0.001),
-			("s", "Second", 1),
-			("m", "Minute", 60),
-			("h", "Hour", 3600),
-		]),
-		("Mass", [
-			("mg", "Milligram", 0.000001),
-			("g", "Gram", 0.001),
-			("kg", "Kilogram", 1),
-			("t", "Ton", 1000),
-			("kt", "Kiloton", 1000000),
-		]),
-		
-		
-		// Physical units
-		("Position", [
-			("ft", "Feet", 3.280839895),
-			("mi", "Mile", 1609.344),
-			("mm", "Millimeter", 0.001),
-			("cm", "Centimeter", 0.01),
-			("m", "Meter", 1),
-			("km", "Kilometer", 1000),
-			("Mm", "Megameter", 1000000),
-		]),
-		("Force", [
-			("mN", "Millinewton", 0.001),
-			("N", "Newton", 1),
-			("kN", "Kilonewton", 1000),
-			("MN", "Meganewton", 1000000),
-		]),
-		("Angle", [
-			("deg", "Degree", 1),
-			("rad", "Radian", 0.01745329238474369),
-			("trn", "Turn", 360),
-			("'", "MinuteDegree", 0.016666666666666666),
-			("''", "SecondDegree", 0.0002777777777777778),
-		]),
-	];
-
-	private static readonly Dictionary<string, string> standardUnits = new() {
-		{"Direction", "dir"},
-		{"Magnitude", "mag"},
-		
-		{"Time", "s"},
-		{"Mass", "kg"},
-		
-		{"Position", "m"},
-		{"Velocity", "m/s"},
-		{"Accel", "m/s2"},
-		{"Force", "N"},
-		{"ForceAccel", "N/s"},
-		
-		{"Angle", "deg"},
-		{"AngleVel", "deg/s"},
-		{"AngleAccel", "deg/s2"},
-		{"Torque", "N/m"},
-		{"TorqueAccel", "N/m/s"}
-	};
-	
-	private static readonly Dictionary<string, string[]> unitInspectorValues = new() {
-		{"Direction", ["dir"]},
-		{"Magnitude", ["mag"]},
-		
-		{"Time", ["ms", "s", "m", "h"]},
-		{"Mass", ["g", "kg", "t"]},
-		
-		{"Position", ["ft", "mi", "cm", "m", "km"] },
-		{"Velocity", ["m/s", "km/h", "ft/s", "mi/h"]},
-		{"Accel", ["m/s2", "km/h2", "ft/s2", "mi/h2"]},
-		{"Force", ["N", "kN", "MN"]},
-		{"ForceAccel", ["N/s", "kN/s"]},
-
-		{"Angle", ["deg", "rad"]},
-		{"AngleVel", ["deg/s", "deg/m", "rad/s", "rad/m"]},
-		{"AngleAccel", ["deg/s2", "deg/m2", "rad/s2", "rad/m2"]},
-		{"Torque", ["N/m", "kN/m"]},
-		{"TorqueAccel", ["N/m/s", "kN/m/s"]},
-	};
-	
-	private static readonly Dictionary<string, int> unitDimensions = new() {
-		{"Direction", 3},
-		{"Magnitude", 1},
-
-		{"Time", 1},
-		{"Mass", 1},
-		
-		{"Position", 3},
-		{"Velocity", 3},
-		{"Accel", 3},
-		{"Force", 3},
-		{"ForceAccel", 3},
-		
-		{"Angle", 3},
-		{"AngleVel", 3},
-		{"AngleAccel", 3},
-		{"Torque", 3},
-		{"TorqueAccel", 3},
-	};
-
-	// How units convert to each other (handles all reorderings and combinations)
-	private static readonly List<(string, string, string)> unitConversions = [
-		("Position", "Velocity", "Time"),
-		("Velocity", "Accel", "Time"),
-		("Force", "Accel", "Mass"),
-		("Force", "ForceAccel", "Time"),
-		
-		("Angle", "AngleVel", "Time"),
-		("AngleVel", "AngleAccel", "Time"),
-		("Torque", "AngleAccel", "Mass"),
-		("Torque", "TorqueAccel", "Time"),
-		
-		("Torque", "Force", "Position")
-	];
-	
-	// How can the user create units (fixed formula)
-	private static readonly List<(string, string)> compoundUnitInputs = [
-		("Velocity", "Position / Time"),
-		("Accel", "Velocity / Time"),
-		("Accel", "Force * Mass"),
-		("ForceAccel", "Force / Time"),
-		
-		("AngleVel", "Angle / Time"),
-		("AngleAccel", "AngleVel / Time"),
-		("AngleAccel", "Torque * Mass"),
-		("TorqueAccel", "Torque / Time"),
-		
-		("Torque", "Force * Position"),
-	];
-	
 	public const string NAMESPACE = "Lepsima.ASV";
-	
-	private static readonly Dictionary<string, Unit> units = new();
 
-	public class Unit {
-		public readonly bool isSimple;
-		public readonly string name;
-		public readonly string unitName;
-		public readonly List<(string, string, double)> scales = [];
-		public readonly List<(string, bool, string)> conversions = [];
-		
-		public Unit(string name) {
-			this.name = name;
-			isSimple = false;
-			
-			string formula = compoundUnitInputs.FirstOrDefault(t => t.Item1 == name).Item2;
-			if (formula == null) return;
-			
-			string[] parts = formula.Split(' ');
-			unitName = units[parts[0]].unitName + units[parts[2]].unitName;
-		}
-		
-		public Unit(string name, List<(string, string, double)> scales) {
-			this.name = name;
-			AddScales(scales);
-			isSimple = true;
-
-			string stdUnit = standardUnits[name];
-			string stdUnitName = scales.FirstOrDefault(t => t.Item1 == stdUnit).Item2;
-			unitName = stdUnitName;
-		}
-
-		public string GetName(int dim) {
-			return name + GetVectorFloatDimension(dim);
-		}
-
-		public void AddComplexInput(string a, bool isMultiplication, string b) {
-			List<(string, string, double)> scalesA = units[a].GetScales();
-			List<(string, string, double)> scalesB = units[b].GetScales();
-
-			List<(string, string, double)> newScales = [];
-
-			foreach ((string unitA, string nameA, double valueA) in scalesA) {
-				foreach ((string unitB, string nameB, double valueB) in scalesB) {
-					double scale = isMultiplication 
-						? valueA * valueB 
-						: valueA / valueB;
-
-					string symbol = isMultiplication ? "*" : "/";
-					string unit = $"{unitA}{symbol}{unitB}";
-					string unitFull = nameA.EndsWith(nameB) ? nameA + "2" : $"{nameA}sPer{nameB}";
-					
-					newScales.Add((unit, unitFull, scale));
-				}	
+	public static readonly Dictionary<string, UnitInfo> units = new() {
+		{
+			"Magnitude", new UnitInfo("Magnitude", "mag", 1) {
+				scales = [
+					("mag", "ZeroToOne", 1)
+				],
+				inspectorUnits = ["mag"],
 			}
-			
-			AddScales(newScales);
-		}
-
-		public List<(string, string, double)> GetScales() {
-			if (isSimple) return scales;
-
-			string siUnit = standardUnits[name];
-			return [(siUnit, unitName, 1f)];
-		}
-		
-		public void AddConversion(string a, bool isMultiplication, string b) {
-			conversions.Add((a, isMultiplication, b));
-		}
-
-		public void AddScales(List<(string, string, double)> scales) {
-			this.scales.AddRange(scales);
-		}
-	}
-	
-	private static void CreateSimpleUnits() {
-		foreach ((string name, List<(string, string, double)> scales) in unitScales) {
-			Unit unit = new(name, scales);
-			units.Add(name, unit);
-		}
-		
-		HashSet<string> unscaledUnits = [];
-		
-		foreach ((string name, string a, string b) in unitConversions) {
-			unscaledUnits.Add(name);
-			unscaledUnits.Add(a);
-			unscaledUnits.Add(b);
-		}
-
-		foreach (string newUnit in unscaledUnits) {
-			Unit unit = new(newUnit);
-
-			if (!units.ContainsKey(newUnit)) {
-				units.Add(newUnit, unit);
+		}, {
+			"Direction", new UnitInfo("Direction", "dir", 1) {
+				scales = [
+					("dir", "Normal", 1),
+					("dir", "Dir", 1)
+				],
+				inspectorUnits = ["dir"],
+			} 
+		}, { 
+			"Time", new UnitInfo("Time", "s", 1) { 
+				scales = [
+					("μs", "Microsecond", 0.000001),
+					("ms", "Millisecond", 0.001),
+					("s", "Second", 1),
+					("m", "Minute", 60),
+					("h", "Hour", 3600),
+				],
+				inspectorUnits = ["ms", "s", "m", "h"],
 			}
-		}
-	}
-
-	private static void CreateCompoundUnits() {
-		foreach ((string name, string a, string b) in unitConversions) {
-			units[name].AddConversion(a, true, b);
-			units[a].AddConversion(name, false, b);
-			units[b].AddConversion(name, false, a);
-		}
-
-		foreach ((string name, string op) in compoundUnitInputs) {
-			string[] parts = op.Split(' ');
-			bool mult = parts[1] == "*";
-			units[name].AddComplexInput(parts[0], mult, parts[2]);
-		}
-	}
+		}, {
+			"Mass", new UnitInfo("Mass", "kg", 1) {
+				scales = [
+					("mg", "Milligram", 0.000001),
+					("g", "Gram", 0.001),
+					("kg", "Kilogram", 1),
+					("t", "Ton", 1000),
+					("kt", "Kiloton", 1000000),
+				],
+				inspectorUnits = ["g", "kg", "t"],
+			}
+		}, { 
+			"Position", new UnitInfo("Position", "m", 3) {
+				scales = [
+					("ft", "Feet", 3.280839895),
+					("mi", "Mile", 1609.344),
+					("mm", "Millimeter", 0.001),
+					("cm", "Centimeter", 0.01),
+					("m", "Meter", 1),
+					("km", "Kilometer", 1000),
+					("Mm", "Megameter", 1000000),
+				],
+				inspectorUnits = ["ft", "mi", "cm", "m", "km"],
+				conversions = [("Velocity", "Time")]
+			}
+		}, {
+			"Velocity", new UnitInfo("Velocity", "m/s", 3) {
+				inspectorUnits = ["m/s", "km/h", "ft/s", "mi/h"],
+				conversions = [("Accel", "Time")],
+				compoundInputs = ["Position / Time"]
+			}
+		}, {
+			"Accel", new UnitInfo("Accel", "m/s2", 3) {
+				inspectorUnits = ["m/s2", "km/h2", "ft/s2", "mi/h2"],
+				compoundInputs = ["Velocity / Time", "Force * Mass"]
+			}
+		}, {
+			"Force", new UnitInfo("Force", "N", 3) {
+				scales = [
+					("mN", "Millinewton", 0.001),
+					("N", "Newton", 1),
+					("kN", "Kilonewton", 1000),
+					("MN", "Meganewton", 1000000),
+				],
+				conversions = [
+					("Accel", "Mass"),
+					("ForceAccel", "Time")
+				],
+				inspectorUnits = ["N", "kN", "MN"],
+			}
+		}, {
+			"ForceAccel", new UnitInfo("ForceAccel", "N/s", 3) {
+				inspectorUnits = ["N/s", "kN/s"],
+				compoundInputs = ["Force / Time"]
+			}
+		}, {
+			"Angle", new UnitInfo("Angle", "N", 3) {
+				scales = [
+					("deg", "Degree", 1),
+					("rad", "Radian", 0.01745329238474369),
+					("trn", "Turn", 360),
+					("'", "MinuteDegree", 0.016666666666666666),
+					("''", "SecondDegree", 0.0002777777777777778),
+				],
+				conversions = [("AngleVel", "Time")],
+				inspectorUnits = ["deg", "rad"]
+			}
+		}, {
+			"AngleVel", new UnitInfo("AngleVel", "deg/s", 3) {
+				inspectorUnits = ["deg/s", "deg/m", "rad/s", "rad/m"],
+				conversions = [("AngleAccel", "Time")],
+				compoundInputs = ["Angle / Time"]
+			}
+		}, {
+			"AngleAccel", new UnitInfo("AngleAccel", "deg/s2", 3) {
+				inspectorUnits = ["deg/s2", "deg/m2", "rad/s2", "rad/m2"],
+				compoundInputs = ["AngleVel / Time", "Torque * Mass"]
+			}
+		}, {
+			"Torque", new UnitInfo("Torque", "N/m", 3) {
+				scales = [
+					("mN", "Millinewton", 0.001),
+					("N", "Newton", 1),
+					("kN", "Kilonewton", 1000),
+					("MN", "Meganewton", 1000000),
+				],
+				conversions = [
+					("AngleAccel", "Mass"),
+					("TorqueAccel", "Time"),
+					("Force", "Position")
+				],
+				inspectorUnits = ["N/m", "kN/m"],
+				compoundInputs = ["Force * Position"]
+			}
+		}, {
+			"TorqueAccel", new UnitInfo("TorqueAccel", "N/m/s", 3) {
+				inspectorUnits = ["N/m/s", "kN/m/s"],
+				compoundInputs = ["Torque / Time"]
+			}
+		}, 
+	};
 	
 	public void Initialize(IncrementalGeneratorInitializationContext context) {
 		var structs = context.SyntaxProvider
@@ -278,42 +154,28 @@ public class ClassGenerator : IIncrementalGenerator {
 	}
 
 	private static void Generate(SourceProductionContext context, ImmutableArray<StructDeclarationSyntax> structs) {
-		CreateSimpleUnits();
-		CreateCompoundUnits();
+		foreach (UnitInfo info in units.Values) 
+			info.Init();
 		
-		GenerateInterface(context);
-		GenerateClasses(context);
-	}
-	
-	private static void GenerateInterface(SourceProductionContext context) {
 		string file = """
-					  namespace NAMESPACE {
-					      public interface IAutoUnit {}
-					      public interface IAutoUnit2 {}
-					      public interface IAutoUnit3 {}
-					      
-					      public interface IAutoUnitUI {}
-					      public interface IAutoUnitUI2 {}
-					      public interface IAutoUnitUI3 {}
-					  }
-					  """.Replace("NAMESPACE", NAMESPACE);
+		              namespace NAMESPACE {
+		                  public interface IAutoUnit {}
+		                  public interface IAutoUnit2 {}
+		                  public interface IAutoUnit3 {}
+		                  
+		                  public interface IAutoUnitUI {}
+		                  public interface IAutoUnitUI2 {}
+		                  public interface IAutoUnitUI3 {}
+		              }
+		              """.Replace("NAMESPACE", NAMESPACE);
 		
-		SourceText source = SourceText.From(file, Encoding.UTF8);
-		context.AddSource("ASV/Utils/Interfaces.cs", source);
-	}
-
-	private static void GenerateClasses(SourceProductionContext context) {
-		foreach (KeyValuePair<string, Unit> keyValuePair in units) {
-			Unit unit = keyValuePair.Value;
-			int dim = unitDimensions[unit.name];
-
-			for (int i = 0; i < dim; i++) {
+		context.AddSource("ASV/Utils/Interfaces.cs", SourceText.From(file, Encoding.UTF8));
+		
+		foreach (UnitInfo unit in units.Values) {
+			for (int i = 0; i < unit.dimensions; i++) {
 				if (i == 0 && unit.name.Equals("Direction")) {
 					continue;
 				}
-				
-				SourceText source = GenerateUnitClass(unit, i);
-				string name = keyValuePair.Key + GetVectorFloatDimension(i);
 
 				string folder = i switch {
 					0 => "Values1D/",
@@ -321,16 +183,17 @@ public class ClassGenerator : IIncrementalGenerator {
 					2 => "Values3D/",
 					_ => "ERROR/"
 				};
-				
-				context.AddSource($"ASV/{folder}{name}.cs", source);
+
+				SourceText source = GenerateUnitClass(unit, i);
+				context.AddSource($"ASV/{folder}{unit.GetName(i)}.cs", source);
 			}
 			
-			SourceText sourceUI = GenerateUnitUIClass(unit, dim);
-			context.AddSource($"ASV/ValuesUI/{keyValuePair.Key}UI.cs", sourceUI);
+			SourceText sourceUI = GenerateUnitUIClass(unit);
+			context.AddSource($"ASV/ValuesUI/{unit.name}UI.cs", sourceUI);
 		}
 	}
 	
-	private static SourceText GenerateUnitClass(Unit unit, int d) {
+	private static SourceText GenerateUnitClass(UnitInfo unit, int d) {
 		StringBuilder sb = new();
 		
 		GenerateUnitData(sb, unit, d);
@@ -344,7 +207,7 @@ public class ClassGenerator : IIncrementalGenerator {
 		return SourceText.From(sb.ToString(), Encoding.UTF8);
 	}
 	
-	private static SourceText GenerateUnitUIClass(Unit unit, int d) {
+	private static SourceText GenerateUnitUIClass(UnitInfo unit) {
 		StringBuilder sb = new();
 		
 		const string PATTERN0 = """
@@ -431,8 +294,8 @@ public class ClassGenerator : IIncrementalGenerator {
 
 		bool isDir = unit.name.Equals("Direction");
 		if (!isDir) PATTERN += PATTERN1;
-		if (d > 1) PATTERN += PATTERN2;
-		if (d > 2) PATTERN += PATTERN3;
+		if (unit.dimensions > 1) PATTERN += PATTERN2;
+		if (unit.dimensions > 2) PATTERN += PATTERN3;
 		
 		string UNIT = unit.name;
 		string SPECIAL = isDir ? "Magnitude" : UNIT;
@@ -450,15 +313,15 @@ public class ClassGenerator : IIncrementalGenerator {
 		
 		StringBuilder allPatterns = new();
 		
-		foreach (string scale in unitInspectorValues[unit.name]) {
-			string scaleName = unit.scales.FirstOrDefault(t => t.Item1.Equals(scale)).Item2;
-			if (scaleName == null) continue;
+		foreach (string inspectorUnit in unit.inspectorUnits) {
+			string inspectorName = unit.GetScaleName(inspectorUnit);
+			if (inspectorName == null) continue;
 			
 			allPatterns.AppendLine(
 				PATTERN4
-					.Replace("UNIT_NAME", scaleName)
-					.Replace("UNIT", scale)
-				);
+					.Replace("UNIT_NAME", inspectorName)
+					.Replace("UNIT", inspectorUnit)
+			);
 		}
 
 		const string PATTERN5 = """
@@ -476,7 +339,7 @@ public class ClassGenerator : IIncrementalGenerator {
 		return SourceText.From(sb.ToString(), Encoding.UTF8);
 	}
 	
-	private static void GenerateUnitData(StringBuilder sb, Unit unit, int d) {
+	private static void GenerateUnitData(StringBuilder sb, UnitInfo unit, int d) {
 		string UNIT = unit.GetName(d);
 		const string PATTERN1 = """
 		                            public float x;
@@ -559,7 +422,11 @@ public class ClassGenerator : IIncrementalGenerator {
 			);
 	}
 
-	private static void GenerateUnitSpecials(StringBuilder sb, Unit unit, int d) {
+	private static void GenerateUnitSpecials(StringBuilder sb, UnitInfo unit, int d) {
+		bool isDirection = unit.name.Equals("Direction");
+		if (!unit.IsSpecialUnit() || (isDirection && d == 0)) return;
+
+		
 		const string PATTERN1 = """
 		                        
 		                        
@@ -574,50 +441,25 @@ public class ClassGenerator : IIncrementalGenerator {
 		                            public static UNIT operator *(DIRECTION left, SECOND right) => new(left.vector * right.vector);
 		                        """;
 
-
-		switch (unit.name) {
-			case "Magnitude": {
-				foreach (KeyValuePair<string,Unit> pair in units) {
-					Unit other = pair.Value;
-					int dim = unitDimensions[other.name];
-
-					if (other.name.Equals("Magnitude") || other.name.Equals("Direction")) {
-						continue;
-					}
-					
-					for (int i = 0; i < dim; i++) {
-						sb.Append(PATTERN1.Replace("UNIT", other.GetName(i)));
-					}
+		foreach (UnitInfo other in units.Values.Where(other => !other.IsSpecialUnit())) {
+			if (isDirection) {
+				if (other.dimensions > d) {
+					sb.Append(PATTERN2
+						.Replace("UNIT", other.GetName(d))
+						.Replace("SECOND", other.GetName(0))
+						.Replace("DIRECTION", unit.GetName(d))
+					);
 				}
-				break;
 			}
-			
-			case "Direction": {
-				if (d == 0) return;
-				
-				foreach (KeyValuePair<string,Unit> pair in units) {
-					Unit other = pair.Value;
-					int dim = unitDimensions[other.name];
-
-					if (other.name.Equals("Magnitude") || other.name.Equals("Direction")) {
-						continue;
-					}
-
-					if (dim > d) {
-						sb.Append(PATTERN2
-							.Replace("UNIT", other.GetName(d))
-							.Replace("SECOND", other.GetName(0))
-							.Replace("DIRECTION",  unit.GetName(d))
-						);
-					}
+			else {
+				for (int i = 0; i < other.dimensions; i++) {
+					sb.Append(PATTERN1.Replace("UNIT", other.GetName(i)));
 				}
-				break;
 			}
-			
 		}
 	}
 	
-	private static void GenerateUnitScales(StringBuilder sb, Unit unit, int d) {
+	private static void GenerateUnitScales(StringBuilder sb, UnitInfo unit, int d) {
 		string PATTERN = """
 
 		                 
@@ -636,10 +478,9 @@ public class ClassGenerator : IIncrementalGenerator {
 		const string PATTERN2 = "x * SCALE_VALUE";
 		const string PATTERN3 = "v.x * SCALE_VALUE";
 		const string PATTERN4 = "x * INV_SCALE_VALUE";
-		
-		string UNIT = unit.GetName(d);
-		
-		foreach ((string name, string fullName, double value)  in unit.scales) {
+
+		if (unit.scales == null) return;
+		foreach ((string name, string fullName, double value) in unit.scales) {
 			string SUB_PATTERN = PATTERN
 				.Replace("VECTOR", GetVector(d))
 				.Replace("PATTERN1", RepeatPatternXYZ(d, PATTERN1))
@@ -652,7 +493,7 @@ public class ClassGenerator : IIncrementalGenerator {
 			string INV_SCALE_VALUE = (1 / value).ToString("G10", CultureInfo.InvariantCulture) + "f";
 			
 			sb.Append(SUB_PATTERN
-				.Replace("UNIT", UNIT)
+				.Replace("UNIT", unit.GetName(d))
 				.Replace("INV_SCALE_VALUE", INV_SCALE_VALUE)
 				.Replace("SCALE_NAME", SCALE_NAME)
 				.Replace("SCALE_VALUE", SCALE_VALUE)
@@ -660,7 +501,7 @@ public class ClassGenerator : IIncrementalGenerator {
 		}
 	}
 
-	private static void GenerateUnitConversions(StringBuilder sb, Unit unit, int d) {
+	private static void GenerateUnitConversions(StringBuilder sb, UnitInfo unit, int d) {
 		string UNIT = unit.GetName(d);
 		sb.AppendLine($"""
 		               
@@ -673,28 +514,28 @@ public class ClassGenerator : IIncrementalGenerator {
 		                   
 		               """);
 		
-		foreach ((string _a, bool isMult, string b) in unit.conversions) {
-			string a = units[_a].GetName(d);
-			bool isOneDim = unitDimensions[_a] == 1;
+		foreach ((string _a, bool isMult, string _b) in unit.conversionData) {
+			UnitInfo a = units[_a];
+			UnitInfo b = units[_b];
+			bool isOneDim = a.dimensions == 1;
 
-			if (isMult && b.Equals("Time")) {
+			if (isMult && _b.Equals("Time")) {
+				string OTHR = a.GetName(d);
 				sb.AppendLine($"""
-				                   public static {UNIT} operator +({a} a, {UNIT} b) => b + a.{UNIT}(VTime.deltaTime);
-				                   public static {UNIT} operator +({UNIT} b, {a} a) => b + a.{UNIT}(VTime.deltaTime);
-				                 
-				                   public static {UNIT} operator -({a} a, {UNIT} b) => a.{UNIT}(VTime.deltaTime) - b;
-				                   public static {UNIT} operator -({UNIT} b, {a} a) => b - a.{UNIT}(VTime.deltaTime);
+				                   public static {UNIT} operator +({OTHR} a, {UNIT} b) => b + a.{UNIT}(VTime.deltaTime);
+				                   public static {UNIT} operator +({UNIT} b, {OTHR} a) => b + a.{UNIT}(VTime.deltaTime);
+				                   public static {UNIT} operator -({OTHR} a, {UNIT} b) => a.{UNIT}(VTime.deltaTime) - b;
+				                   public static {UNIT} operator -({UNIT} b, {OTHR} a) => b - a.{UNIT}(VTime.deltaTime);
 				                   
 				               """);
 			}
 
-			int maxD = Math.Min(unitDimensions[_a], unitDimensions[b]);
+			int maxD = Math.Min(a.dimensions, b.dimensions);
+			string alt_a = a.GetName(d);
+			bool flip = unit.conversions.Count > 0 && alt_a.Equals(unit.conversions[0].Item1);
 			
-			string main = unitConversions.FirstOrDefault(t => t.Item1.Equals(unit.name)).Item2;
-			bool flip = a.Equals(main);
-
-			string U1 = flip ? b : a;
-			string U2 = flip ? a : b;
+			string U1 = flip ? _b : alt_a;
+			string U2 = flip ? alt_a : _b;
 
 			if (maxD == 1) {
 				int repA, repB;
@@ -702,8 +543,8 @@ public class ClassGenerator : IIncrementalGenerator {
 				string A, B;
 				
 				if (!isMult) {
-					int d1 = Math.Min(unitDimensions[flip ? b : _a], d + 1);
-					int d2 = Math.Min(unitDimensions[flip ? _a : b], d + 1);
+					int d1 = Math.Min((flip ? b : a).dimensions, d + 1);
+					int d2 = Math.Min((flip ? a : b).dimensions, d + 1);
 					
 					patternA = d2 == 1 ? "v * x" : d1 == 1 ? "v.magnitude * magnitude" : "v.x * x";
 					patternB = d1 == 1 ? "v / x" : d2 == 1 ? "v.magnitude / magnitude" : "v.x / x";
@@ -715,8 +556,8 @@ public class ClassGenerator : IIncrementalGenerator {
 					B = U2;
 				}
 				else {
-					int da = Math.Min(unitDimensions[_a], d + 1);
-					int db = Math.Min(unitDimensions[b], d + 1);
+					int da = Math.Min(a.dimensions, d + 1);
+					int db = Math.Min(b.dimensions, d + 1);
 
 					patternA = db == 1 ? "x / v" : da == 1 ? "magnitude / v.magnitude" : "x / v.x";
 					patternB = da == 1 ? "x / v" : db == 1 ? "magnitude / v.magnitude" : "x / v.x";
@@ -724,8 +565,8 @@ public class ClassGenerator : IIncrementalGenerator {
 					repA = da == 1 && db != 1 ? 0 : d; 
 					repB = da != 1 && db == 1 ? 0 : d;
 
-					A = a;
-					B = b;
+					A = alt_a;
+					B = _b;
 				}
 				
 				sb.AppendLine(GenerateConverter(A, B, RepeatPatternXYZ(repA, patternA)));
@@ -736,7 +577,7 @@ public class ClassGenerator : IIncrementalGenerator {
 					string _a2 = U1, _b2 = U2;
 
 					if (!isOneDim) {
-						_a2 = GetMaxDimension(_a, d);
+						_a2 = GetMaxDimension(a, d);
 						_b2 = GetMaxDimension(b, d);
 					}
 					
@@ -747,10 +588,10 @@ public class ClassGenerator : IIncrementalGenerator {
 					string pattern1 = isOneDim ? "DONT_CHANGE / v.x" : "x / v.x";
 					string pattern2 = RepeatPatternXYZ(d, pattern1).Replace("DONT_CHANGE", "x");
 
-					string _a2 = a, _b2 = b;
+					string _a2 = alt_a, _b2 = _b;
 					
 					if (!isOneDim) {
-						_a2 = GetMaxDimension(_a, d);
+						_a2 = GetMaxDimension(a, d);
 						_b2 = GetMaxDimension(b, d);
 					}
 					
@@ -761,10 +602,10 @@ public class ClassGenerator : IIncrementalGenerator {
 
 			sb.AppendLine();
 
-			string _a3 = a, _b3 = b;
+			string _a3 = alt_a, _b3 = _b;
 
 			if (!isOneDim) {
-				_a3 = GetMaxDimension(_a, d);
+				_a3 = GetMaxDimension(a, d);
 				_b3 = GetMaxDimension(b, d);
 			}
 			
@@ -774,10 +615,9 @@ public class ClassGenerator : IIncrementalGenerator {
 		}
 	}
 
-	private static string GetMaxDimension(string unit, int maxDim) {
-		int dim = unitDimensions[unit];
-		int max = Math.Min(dim - 1, maxDim);
-		return units[unit].GetName(max);
+	private static string GetMaxDimension(UnitInfo unit, int maxDim) {
+		int max = Math.Min(unit.dimensions - 1, maxDim);
+		return unit.GetName(max);
 	}
 
 	private static string GenerateConverter(string u1, string u2, string pattern) {
@@ -813,7 +653,7 @@ public class ClassGenerator : IIncrementalGenerator {
 		};
 	}
 
-	private static string GetVectorFloatDimension(int dim) {
+	public static string GetVectorFloatDimension(int dim) {
 		return dim == 0 ? "" : dim + 1 + "";
 	}
 }

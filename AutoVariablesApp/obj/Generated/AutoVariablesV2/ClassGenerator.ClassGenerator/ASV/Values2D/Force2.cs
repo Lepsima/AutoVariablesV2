@@ -38,10 +38,13 @@ public struct Force2 : IAutoUnit2 {
 
     public static Force2 operator +(Force2 a, Force2 b) => new(a.x + b.x, a.y + b.y);
     public static Force2 operator -(Force2 a, Force2 b) => new(a.x - b.x, a.y - b.y);
+    
     public static Force2 operator *(Force2 a, Force2 b) => new(a.x * b.x, a.y * b.y);
     public static Force2 operator /(Force2 a, Force2 b) => new(a.x / b.x, a.y / b.y);
+    
     public Accel2 Accel2(Mass v) => new(x / v, y / v);
     public Mass Mass(Accel2 v) => new(magnitude / v.magnitude);
+
     public Force2(Accel2 a, Mass b) => a.Force2(b);
     public Force2(Mass b, Accel2 a) => a.Force2(b);
 
@@ -52,7 +55,15 @@ public struct Force2 : IAutoUnit2 {
     
     public ForceAccel2 ForceAccel2(Time v) => new(x / v, y / v);
     public Time Time(ForceAccel2 v) => new(magnitude / v.magnitude);
+
     public Force2(ForceAccel2 a, Time b) => a.Force2(b);
     public Force2(Time b, ForceAccel2 a) => a.Force2(b);
+
+    public Torque2 Torque2(Position2 v) => new(v.x * x, v.y * y);
+    public Position2 Position2(Torque2 v) => new(v.x / x, v.y / y);
+
+    public Force2(Torque2 a, Position2 b) => a.Force2(b);
+    public Force2(Position2 b, Torque2 a) => a.Force2(b);
+
 }
 }

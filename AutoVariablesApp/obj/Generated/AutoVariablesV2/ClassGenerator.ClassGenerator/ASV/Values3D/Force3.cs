@@ -40,10 +40,13 @@ public struct Force3 : IAutoUnit3 {
 
     public static Force3 operator +(Force3 a, Force3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z);
     public static Force3 operator -(Force3 a, Force3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
+    
     public static Force3 operator *(Force3 a, Force3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z);
     public static Force3 operator /(Force3 a, Force3 b) => new(a.x / b.x, a.y / b.y, a.z / b.z);
+    
     public Accel3 Accel3(Mass v) => new(x / v, y / v, z / v);
     public Mass Mass(Accel3 v) => new(magnitude / v.magnitude);
+
     public Force3(Accel3 a, Mass b) => a.Force3(b);
     public Force3(Mass b, Accel3 a) => a.Force3(b);
 
@@ -54,7 +57,15 @@ public struct Force3 : IAutoUnit3 {
     
     public ForceAccel3 ForceAccel3(Time v) => new(x / v, y / v, z / v);
     public Time Time(ForceAccel3 v) => new(magnitude / v.magnitude);
+
     public Force3(ForceAccel3 a, Time b) => a.Force3(b);
     public Force3(Time b, ForceAccel3 a) => a.Force3(b);
+
+    public Torque3 Torque3(Position3 v) => new(v.x * x, v.y * y, v.z * z);
+    public Position3 Position3(Torque3 v) => new(v.x / x, v.y / y, v.z / z);
+
+    public Force3(Torque3 a, Position3 b) => a.Force3(b);
+    public Force3(Position3 b, Torque3 a) => a.Force3(b);
+
 }
 }

@@ -65,8 +65,6 @@ public struct TorqueAccel3UI : IAutoUnitUI3 {
 }
 
 public enum TorqueAccelUIType {
-    [InspectorName("N/m/s")]
-    MeterNewtonsPerSecond,
 
 }
 }

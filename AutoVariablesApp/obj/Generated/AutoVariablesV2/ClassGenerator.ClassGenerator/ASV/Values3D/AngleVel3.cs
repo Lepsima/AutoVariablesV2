@@ -124,10 +124,13 @@ public struct AngleVel3 : IAutoUnit3 {
 
     public static AngleVel3 operator +(AngleVel3 a, AngleVel3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z);
     public static AngleVel3 operator -(AngleVel3 a, AngleVel3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
+    
     public static AngleVel3 operator *(AngleVel3 a, AngleVel3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z);
     public static AngleVel3 operator /(AngleVel3 a, AngleVel3 b) => new(a.x / b.x, a.y / b.y, a.z / b.z);
+    
     public Angle3 Angle3(Time v) => new(v * x, v * y, v * z);
     public Time Time(Angle3 v) => new(v.magnitude / magnitude);
+
     public AngleVel3(Angle3 a, Time b) => a.AngleVel3(b);
     public AngleVel3(Time b, Angle3 a) => a.AngleVel3(b);
 
@@ -138,7 +141,9 @@ public struct AngleVel3 : IAutoUnit3 {
     
     public AngleAccel3 AngleAccel3(Time v) => new(x / v, y / v, z / v);
     public Time Time(AngleAccel3 v) => new(magnitude / v.magnitude);
+
     public AngleVel3(AngleAccel3 a, Time b) => a.AngleVel3(b);
     public AngleVel3(Time b, AngleAccel3 a) => a.AngleVel3(b);
+
 }
 }

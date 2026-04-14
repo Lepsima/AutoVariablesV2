@@ -91,10 +91,13 @@ public struct AngleVel : IAutoUnit {
 
     public static AngleVel operator +(AngleVel a, AngleVel b) => new(a.x + b.x);
     public static AngleVel operator -(AngleVel a, AngleVel b) => new(a.x - b.x);
+    
     public static AngleVel operator *(AngleVel a, AngleVel b) => new(a.x * b.x);
     public static AngleVel operator /(AngleVel a, AngleVel b) => new(a.x / b.x);
+    
     public Angle Angle(Time v) => new(v * x);
     public Time Time(Angle v) => new(v / x);
+
     public AngleVel(Angle a, Time b) => a.AngleVel(b);
     public AngleVel(Time b, Angle a) => a.AngleVel(b);
 
@@ -105,7 +108,9 @@ public struct AngleVel : IAutoUnit {
     
     public AngleAccel AngleAccel(Time v) => new(x / v);
     public Time Time(AngleAccel v) => new(x / v);
+
     public AngleVel(AngleAccel a, Time b) => a.AngleVel(b);
     public AngleVel(Time b, AngleAccel a) => a.AngleVel(b);
+
 }
 }

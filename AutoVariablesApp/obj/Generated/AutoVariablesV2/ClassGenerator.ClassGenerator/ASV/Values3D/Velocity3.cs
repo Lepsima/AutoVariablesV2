@@ -164,10 +164,13 @@ public struct Velocity3 : IAutoUnit3 {
 
     public static Velocity3 operator +(Velocity3 a, Velocity3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z);
     public static Velocity3 operator -(Velocity3 a, Velocity3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
+    
     public static Velocity3 operator *(Velocity3 a, Velocity3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z);
     public static Velocity3 operator /(Velocity3 a, Velocity3 b) => new(a.x / b.x, a.y / b.y, a.z / b.z);
+    
     public Position3 Position3(Time v) => new(v * x, v * y, v * z);
     public Time Time(Position3 v) => new(v.magnitude / magnitude);
+
     public Velocity3(Position3 a, Time b) => a.Velocity3(b);
     public Velocity3(Time b, Position3 a) => a.Velocity3(b);
 
@@ -178,7 +181,9 @@ public struct Velocity3 : IAutoUnit3 {
     
     public Accel3 Accel3(Time v) => new(x / v, y / v, z / v);
     public Time Time(Accel3 v) => new(magnitude / v.magnitude);
+
     public Velocity3(Accel3 a, Time b) => a.Velocity3(b);
     public Velocity3(Time b, Accel3 a) => a.Velocity3(b);
+
 }
 }

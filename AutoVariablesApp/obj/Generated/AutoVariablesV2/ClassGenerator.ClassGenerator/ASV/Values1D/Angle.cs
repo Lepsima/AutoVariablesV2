@@ -31,9 +31,10 @@ public struct Angle : IAutoUnit {
 
     public static Angle operator +(Angle a, Angle b) => new(a.x + b.x);
     public static Angle operator -(Angle a, Angle b) => new(a.x - b.x);
+    
     public static Angle operator *(Angle a, Angle b) => new(a.x * b.x);
     public static Angle operator /(Angle a, Angle b) => new(a.x / b.x);
-
+    
     public static Angle operator +(AngleVel a, Angle b) => b + a.Angle(VTime.deltaTime);
     public static Angle operator +(Angle b, AngleVel a) => b + a.Angle(VTime.deltaTime);
     public static Angle operator -(AngleVel a, Angle b) => a.Angle(VTime.deltaTime) - b;
@@ -41,7 +42,9 @@ public struct Angle : IAutoUnit {
     
     public AngleVel AngleVel(Time v) => new(x / v);
     public Time Time(AngleVel v) => new(x / v);
+
     public Angle(AngleVel a, Time b) => a.Angle(b);
     public Angle(Time b, AngleVel a) => a.Angle(b);
+
 }
 }

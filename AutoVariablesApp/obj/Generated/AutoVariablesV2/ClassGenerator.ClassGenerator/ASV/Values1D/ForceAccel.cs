@@ -76,11 +76,15 @@ public struct ForceAccel : IAutoUnit {
 
     public static ForceAccel operator +(ForceAccel a, ForceAccel b) => new(a.x + b.x);
     public static ForceAccel operator -(ForceAccel a, ForceAccel b) => new(a.x - b.x);
+    
     public static ForceAccel operator *(ForceAccel a, ForceAccel b) => new(a.x * b.x);
     public static ForceAccel operator /(ForceAccel a, ForceAccel b) => new(a.x / b.x);
+    
     public Force Force(Time v) => new(v * x);
     public Time Time(Force v) => new(v / x);
+
     public ForceAccel(Force a, Time b) => a.ForceAccel(b);
     public ForceAccel(Time b, Force a) => a.ForceAccel(b);
+
 }
 }

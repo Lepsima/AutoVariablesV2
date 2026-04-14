@@ -102,11 +102,15 @@ public struct ForceAccel2 : IAutoUnit2 {
 
     public static ForceAccel2 operator +(ForceAccel2 a, ForceAccel2 b) => new(a.x + b.x, a.y + b.y);
     public static ForceAccel2 operator -(ForceAccel2 a, ForceAccel2 b) => new(a.x - b.x, a.y - b.y);
+    
     public static ForceAccel2 operator *(ForceAccel2 a, ForceAccel2 b) => new(a.x * b.x, a.y * b.y);
     public static ForceAccel2 operator /(ForceAccel2 a, ForceAccel2 b) => new(a.x / b.x, a.y / b.y);
+    
     public Force2 Force2(Time v) => new(v * x, v * y);
     public Time Time(Force2 v) => new(v.magnitude / magnitude);
+
     public ForceAccel2(Force2 a, Time b) => a.ForceAccel2(b);
     public ForceAccel2(Time b, Force2 a) => a.ForceAccel2(b);
+
 }
 }

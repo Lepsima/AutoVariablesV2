@@ -104,11 +104,15 @@ public struct ForceAccel3 : IAutoUnit3 {
 
     public static ForceAccel3 operator +(ForceAccel3 a, ForceAccel3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z);
     public static ForceAccel3 operator -(ForceAccel3 a, ForceAccel3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
+    
     public static ForceAccel3 operator *(ForceAccel3 a, ForceAccel3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z);
     public static ForceAccel3 operator /(ForceAccel3 a, ForceAccel3 b) => new(a.x / b.x, a.y / b.y, a.z / b.z);
+    
     public Force3 Force3(Time v) => new(v * x, v * y, v * z);
     public Time Time(Force3 v) => new(v.magnitude / magnitude);
+
     public ForceAccel3(Force3 a, Time b) => a.ForceAccel3(b);
     public ForceAccel3(Time b, Force3 a) => a.ForceAccel3(b);
+
 }
 }

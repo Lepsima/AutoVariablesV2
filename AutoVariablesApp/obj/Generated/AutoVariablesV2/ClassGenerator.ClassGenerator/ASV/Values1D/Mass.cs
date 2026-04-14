@@ -31,11 +31,21 @@ public struct Mass : IAutoUnit {
 
     public static Mass operator +(Mass a, Mass b) => new(a.x + b.x);
     public static Mass operator -(Mass a, Mass b) => new(a.x - b.x);
+    
     public static Mass operator *(Mass a, Mass b) => new(a.x * b.x);
     public static Mass operator /(Mass a, Mass b) => new(a.x / b.x);
+    
     public Force Force(Accel v) => new(v.x * x);
     public Accel Accel(Force v) => new(v.x / x);
+
     public Mass(Force a, Accel b) => a.Mass(b);
     public Mass(Accel b, Force a) => a.Mass(b);
+
+    public Torque Torque(AngleAccel v) => new(v.x * x);
+    public AngleAccel AngleAccel(Torque v) => new(v.x / x);
+
+    public Mass(Torque a, AngleAccel b) => a.Mass(b);
+    public Mass(AngleAccel b, Torque a) => a.Mass(b);
+
 }
 }

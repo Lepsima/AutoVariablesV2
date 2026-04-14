@@ -21,7 +21,7 @@ public struct MagnitudeUI : IAutoUnitUI {
 
 public enum MagnitudeUIType {
     [InspectorName("mag")]
-    Number,
+    ZeroToOne,
 
 }
 }

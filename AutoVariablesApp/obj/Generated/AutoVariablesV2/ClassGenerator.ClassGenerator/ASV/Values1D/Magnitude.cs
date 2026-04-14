@@ -29,24 +29,6 @@ public struct Magnitude : IAutoUnit {
     public static Position3 operator *(Position3 left, Magnitude right) => new(left.vector * right.vector);
     public static Position3 operator *(Magnitude left, Position3 right) => new(left.vector * right.vector);
 
-    public static Force operator *(Force left, Magnitude right) => new(left.vector * right.vector);
-    public static Force operator *(Magnitude left, Force right) => new(left.vector * right.vector);
-
-    public static Force2 operator *(Force2 left, Magnitude right) => new(left.vector * right.vector);
-    public static Force2 operator *(Magnitude left, Force2 right) => new(left.vector * right.vector);
-
-    public static Force3 operator *(Force3 left, Magnitude right) => new(left.vector * right.vector);
-    public static Force3 operator *(Magnitude left, Force3 right) => new(left.vector * right.vector);
-
-    public static Angle operator *(Angle left, Magnitude right) => new(left.vector * right.vector);
-    public static Angle operator *(Magnitude left, Angle right) => new(left.vector * right.vector);
-
-    public static Angle2 operator *(Angle2 left, Magnitude right) => new(left.vector * right.vector);
-    public static Angle2 operator *(Magnitude left, Angle2 right) => new(left.vector * right.vector);
-
-    public static Angle3 operator *(Angle3 left, Magnitude right) => new(left.vector * right.vector);
-    public static Angle3 operator *(Magnitude left, Angle3 right) => new(left.vector * right.vector);
-
     public static Velocity operator *(Velocity left, Magnitude right) => new(left.vector * right.vector);
     public static Velocity operator *(Magnitude left, Velocity right) => new(left.vector * right.vector);
 
@@ -65,6 +47,15 @@ public struct Magnitude : IAutoUnit {
     public static Accel3 operator *(Accel3 left, Magnitude right) => new(left.vector * right.vector);
     public static Accel3 operator *(Magnitude left, Accel3 right) => new(left.vector * right.vector);
 
+    public static Force operator *(Force left, Magnitude right) => new(left.vector * right.vector);
+    public static Force operator *(Magnitude left, Force right) => new(left.vector * right.vector);
+
+    public static Force2 operator *(Force2 left, Magnitude right) => new(left.vector * right.vector);
+    public static Force2 operator *(Magnitude left, Force2 right) => new(left.vector * right.vector);
+
+    public static Force3 operator *(Force3 left, Magnitude right) => new(left.vector * right.vector);
+    public static Force3 operator *(Magnitude left, Force3 right) => new(left.vector * right.vector);
+
     public static ForceAccel operator *(ForceAccel left, Magnitude right) => new(left.vector * right.vector);
     public static ForceAccel operator *(Magnitude left, ForceAccel right) => new(left.vector * right.vector);
 
@@ -73,6 +64,15 @@ public struct Magnitude : IAutoUnit {
 
     public static ForceAccel3 operator *(ForceAccel3 left, Magnitude right) => new(left.vector * right.vector);
     public static ForceAccel3 operator *(Magnitude left, ForceAccel3 right) => new(left.vector * right.vector);
+
+    public static Angle operator *(Angle left, Magnitude right) => new(left.vector * right.vector);
+    public static Angle operator *(Magnitude left, Angle right) => new(left.vector * right.vector);
+
+    public static Angle2 operator *(Angle2 left, Magnitude right) => new(left.vector * right.vector);
+    public static Angle2 operator *(Magnitude left, Angle2 right) => new(left.vector * right.vector);
+
+    public static Angle3 operator *(Angle3 left, Magnitude right) => new(left.vector * right.vector);
+    public static Angle3 operator *(Magnitude left, Angle3 right) => new(left.vector * right.vector);
 
     public static AngleVel operator *(AngleVel left, Magnitude right) => new(left.vector * right.vector);
     public static AngleVel operator *(Magnitude left, AngleVel right) => new(left.vector * right.vector);
@@ -92,12 +92,32 @@ public struct Magnitude : IAutoUnit {
     public static AngleAccel3 operator *(AngleAccel3 left, Magnitude right) => new(left.vector * right.vector);
     public static AngleAccel3 operator *(Magnitude left, AngleAccel3 right) => new(left.vector * right.vector);
 
-    public float ToNumber() => x * 1f;
-    public static Magnitude Number(float x) => new Magnitude(x * 1f);
+    public static Torque operator *(Torque left, Magnitude right) => new(left.vector * right.vector);
+    public static Torque operator *(Magnitude left, Torque right) => new(left.vector * right.vector);
+
+    public static Torque2 operator *(Torque2 left, Magnitude right) => new(left.vector * right.vector);
+    public static Torque2 operator *(Magnitude left, Torque2 right) => new(left.vector * right.vector);
+
+    public static Torque3 operator *(Torque3 left, Magnitude right) => new(left.vector * right.vector);
+    public static Torque3 operator *(Magnitude left, Torque3 right) => new(left.vector * right.vector);
+
+    public static TorqueAccel operator *(TorqueAccel left, Magnitude right) => new(left.vector * right.vector);
+    public static TorqueAccel operator *(Magnitude left, TorqueAccel right) => new(left.vector * right.vector);
+
+    public static TorqueAccel2 operator *(TorqueAccel2 left, Magnitude right) => new(left.vector * right.vector);
+    public static TorqueAccel2 operator *(Magnitude left, TorqueAccel2 right) => new(left.vector * right.vector);
+
+    public static TorqueAccel3 operator *(TorqueAccel3 left, Magnitude right) => new(left.vector * right.vector);
+    public static TorqueAccel3 operator *(Magnitude left, TorqueAccel3 right) => new(left.vector * right.vector);
+
+    public float ToZeroToOne() => x * 1f;
+    public static Magnitude ZeroToOne(float x) => new Magnitude(x * 1f);
 
     public static Magnitude operator +(Magnitude a, Magnitude b) => new(a.x + b.x);
     public static Magnitude operator -(Magnitude a, Magnitude b) => new(a.x - b.x);
+    
     public static Magnitude operator *(Magnitude a, Magnitude b) => new(a.x * b.x);
     public static Magnitude operator /(Magnitude a, Magnitude b) => new(a.x / b.x);
+    
 }
 }

@@ -42,9 +42,10 @@ public struct Angle2 : IAutoUnit2 {
 
     public static Angle2 operator +(Angle2 a, Angle2 b) => new(a.x + b.x, a.y + b.y);
     public static Angle2 operator -(Angle2 a, Angle2 b) => new(a.x - b.x, a.y - b.y);
+    
     public static Angle2 operator *(Angle2 a, Angle2 b) => new(a.x * b.x, a.y * b.y);
     public static Angle2 operator /(Angle2 a, Angle2 b) => new(a.x / b.x, a.y / b.y);
-
+    
     public static Angle2 operator +(AngleVel2 a, Angle2 b) => b + a.Angle2(VTime.deltaTime);
     public static Angle2 operator +(Angle2 b, AngleVel2 a) => b + a.Angle2(VTime.deltaTime);
     public static Angle2 operator -(AngleVel2 a, Angle2 b) => a.Angle2(VTime.deltaTime) - b;
@@ -52,7 +53,9 @@ public struct Angle2 : IAutoUnit2 {
     
     public AngleVel2 AngleVel2(Time v) => new(x / v, y / v);
     public Time Time(AngleVel2 v) => new(magnitude / v.magnitude);
+
     public Angle2(AngleVel2 a, Time b) => a.Angle2(b);
     public Angle2(Time b, AngleVel2 a) => a.Angle2(b);
+
 }
 }

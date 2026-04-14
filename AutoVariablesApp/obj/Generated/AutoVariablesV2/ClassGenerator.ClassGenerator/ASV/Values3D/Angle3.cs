@@ -44,9 +44,10 @@ public struct Angle3 : IAutoUnit3 {
 
     public static Angle3 operator +(Angle3 a, Angle3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z);
     public static Angle3 operator -(Angle3 a, Angle3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
+    
     public static Angle3 operator *(Angle3 a, Angle3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z);
     public static Angle3 operator /(Angle3 a, Angle3 b) => new(a.x / b.x, a.y / b.y, a.z / b.z);
-
+    
     public static Angle3 operator +(AngleVel3 a, Angle3 b) => b + a.Angle3(VTime.deltaTime);
     public static Angle3 operator +(Angle3 b, AngleVel3 a) => b + a.Angle3(VTime.deltaTime);
     public static Angle3 operator -(AngleVel3 a, Angle3 b) => a.Angle3(VTime.deltaTime) - b;
@@ -54,7 +55,9 @@ public struct Angle3 : IAutoUnit3 {
     
     public AngleVel3 AngleVel3(Time v) => new(x / v, y / v, z / v);
     public Time Time(AngleVel3 v) => new(magnitude / v.magnitude);
+
     public Angle3(AngleVel3 a, Time b) => a.Angle3(b);
     public Angle3(Time b, AngleVel3 a) => a.Angle3(b);
+
 }
 }

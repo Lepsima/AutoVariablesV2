@@ -37,9 +37,10 @@ public struct Position : IAutoUnit {
 
     public static Position operator +(Position a, Position b) => new(a.x + b.x);
     public static Position operator -(Position a, Position b) => new(a.x - b.x);
+    
     public static Position operator *(Position a, Position b) => new(a.x * b.x);
     public static Position operator /(Position a, Position b) => new(a.x / b.x);
-
+    
     public static Position operator +(Velocity a, Position b) => b + a.Position(VTime.deltaTime);
     public static Position operator +(Position b, Velocity a) => b + a.Position(VTime.deltaTime);
     public static Position operator -(Velocity a, Position b) => a.Position(VTime.deltaTime) - b;
@@ -47,7 +48,15 @@ public struct Position : IAutoUnit {
     
     public Velocity Velocity(Time v) => new(x / v);
     public Time Time(Velocity v) => new(x / v);
+
     public Position(Velocity a, Time b) => a.Position(b);
     public Position(Time b, Velocity a) => a.Position(b);
+
+    public Torque Torque(Force v) => new(v.x * x);
+    public Force Force(Torque v) => new(v.x / x);
+
+    public Position(Torque a, Force b) => a.Position(b);
+    public Position(Force b, Torque a) => a.Position(b);
+
 }
 }

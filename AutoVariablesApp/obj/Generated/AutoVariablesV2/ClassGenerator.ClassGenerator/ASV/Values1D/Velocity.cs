@@ -121,10 +121,13 @@ public struct Velocity : IAutoUnit {
 
     public static Velocity operator +(Velocity a, Velocity b) => new(a.x + b.x);
     public static Velocity operator -(Velocity a, Velocity b) => new(a.x - b.x);
+    
     public static Velocity operator *(Velocity a, Velocity b) => new(a.x * b.x);
     public static Velocity operator /(Velocity a, Velocity b) => new(a.x / b.x);
+    
     public Position Position(Time v) => new(v * x);
     public Time Time(Position v) => new(v / x);
+
     public Velocity(Position a, Time b) => a.Velocity(b);
     public Velocity(Time b, Position a) => a.Velocity(b);
 
@@ -135,7 +138,9 @@ public struct Velocity : IAutoUnit {
     
     public Accel Accel(Time v) => new(x / v);
     public Time Time(Accel v) => new(x / v);
+
     public Velocity(Accel a, Time b) => a.Velocity(b);
     public Velocity(Time b, Accel a) => a.Velocity(b);
+
 }
 }

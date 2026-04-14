@@ -122,10 +122,13 @@ public struct AngleVel2 : IAutoUnit2 {
 
     public static AngleVel2 operator +(AngleVel2 a, AngleVel2 b) => new(a.x + b.x, a.y + b.y);
     public static AngleVel2 operator -(AngleVel2 a, AngleVel2 b) => new(a.x - b.x, a.y - b.y);
+    
     public static AngleVel2 operator *(AngleVel2 a, AngleVel2 b) => new(a.x * b.x, a.y * b.y);
     public static AngleVel2 operator /(AngleVel2 a, AngleVel2 b) => new(a.x / b.x, a.y / b.y);
+    
     public Angle2 Angle2(Time v) => new(v * x, v * y);
     public Time Time(Angle2 v) => new(v.magnitude / magnitude);
+
     public AngleVel2(Angle2 a, Time b) => a.AngleVel2(b);
     public AngleVel2(Time b, Angle2 a) => a.AngleVel2(b);
 
@@ -136,7 +139,9 @@ public struct AngleVel2 : IAutoUnit2 {
     
     public AngleAccel2 AngleAccel2(Time v) => new(x / v, y / v);
     public Time Time(AngleAccel2 v) => new(magnitude / v.magnitude);
+
     public AngleVel2(AngleAccel2 a, Time b) => a.AngleVel2(b);
     public AngleVel2(Time b, AngleAccel2 a) => a.AngleVel2(b);
+
 }
 }

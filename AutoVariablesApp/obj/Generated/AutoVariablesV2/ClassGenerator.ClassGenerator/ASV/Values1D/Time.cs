@@ -31,27 +31,45 @@ public struct Time : IAutoUnit {
 
     public static Time operator +(Time a, Time b) => new(a.x + b.x);
     public static Time operator -(Time a, Time b) => new(a.x - b.x);
+    
     public static Time operator *(Time a, Time b) => new(a.x * b.x);
     public static Time operator /(Time a, Time b) => new(a.x / b.x);
+    
     public Position Position(Velocity v) => new(v.x * x);
     public Velocity Velocity(Position v) => new(v.x / x);
+
     public Time(Position a, Velocity b) => a.Time(b);
     public Time(Velocity b, Position a) => a.Time(b);
+
     public Velocity Velocity(Accel v) => new(v.x * x);
     public Accel Accel(Velocity v) => new(v.x / x);
+
     public Time(Velocity a, Accel b) => a.Time(b);
     public Time(Accel b, Velocity a) => a.Time(b);
+
     public Force Force(ForceAccel v) => new(v.x * x);
     public ForceAccel ForceAccel(Force v) => new(v.x / x);
+
     public Time(Force a, ForceAccel b) => a.Time(b);
     public Time(ForceAccel b, Force a) => a.Time(b);
+
     public Angle Angle(AngleVel v) => new(v.x * x);
     public AngleVel AngleVel(Angle v) => new(v.x / x);
+
     public Time(Angle a, AngleVel b) => a.Time(b);
     public Time(AngleVel b, Angle a) => a.Time(b);
+
     public AngleVel AngleVel(AngleAccel v) => new(v.x * x);
     public AngleAccel AngleAccel(AngleVel v) => new(v.x / x);
+
     public Time(AngleVel a, AngleAccel b) => a.Time(b);
     public Time(AngleAccel b, AngleVel a) => a.Time(b);
+
+    public Torque Torque(TorqueAccel v) => new(v.x * x);
+    public TorqueAccel TorqueAccel(Torque v) => new(v.x / x);
+
+    public Time(Torque a, TorqueAccel b) => a.Time(b);
+    public Time(TorqueAccel b, Torque a) => a.Time(b);
+
 }
 }

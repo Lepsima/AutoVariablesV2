@@ -52,9 +52,10 @@ public struct Position3 : IAutoUnit3 {
 
     public static Position3 operator +(Position3 a, Position3 b) => new(a.x + b.x, a.y + b.y, a.z + b.z);
     public static Position3 operator -(Position3 a, Position3 b) => new(a.x - b.x, a.y - b.y, a.z - b.z);
+    
     public static Position3 operator *(Position3 a, Position3 b) => new(a.x * b.x, a.y * b.y, a.z * b.z);
     public static Position3 operator /(Position3 a, Position3 b) => new(a.x / b.x, a.y / b.y, a.z / b.z);
-
+    
     public static Position3 operator +(Velocity3 a, Position3 b) => b + a.Position3(VTime.deltaTime);
     public static Position3 operator +(Position3 b, Velocity3 a) => b + a.Position3(VTime.deltaTime);
     public static Position3 operator -(Velocity3 a, Position3 b) => a.Position3(VTime.deltaTime) - b;
@@ -62,7 +63,15 @@ public struct Position3 : IAutoUnit3 {
     
     public Velocity3 Velocity3(Time v) => new(x / v, y / v, z / v);
     public Time Time(Velocity3 v) => new(magnitude / v.magnitude);
+
     public Position3(Velocity3 a, Time b) => a.Position3(b);
     public Position3(Time b, Velocity3 a) => a.Position3(b);
+
+    public Torque3 Torque3(Force3 v) => new(v.x * x, v.y * y, v.z * z);
+    public Force3 Force3(Torque3 v) => new(v.x / x, v.y / y, v.z / z);
+
+    public Position3(Torque3 a, Force3 b) => a.Position3(b);
+    public Position3(Force3 b, Torque3 a) => a.Position3(b);
+
 }
 }
