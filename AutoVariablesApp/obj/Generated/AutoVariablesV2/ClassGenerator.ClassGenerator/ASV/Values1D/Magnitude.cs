@@ -14,20 +14,11 @@ public struct Magnitude : IAutoUnit {
     public static implicit operator float(Magnitude v) => v.x;
     public Magnitude magnitude => new(x);
 
-    public static Mass operator *(Mass left, Magnitude right) => new(left.vector * right.vector);
-    public static Mass operator *(Magnitude left, Mass right) => new(left.vector * right.vector);
-
-    public static Force operator *(Force left, Magnitude right) => new(left.vector * right.vector);
-    public static Force operator *(Magnitude left, Force right) => new(left.vector * right.vector);
-
-    public static Force2 operator *(Force2 left, Magnitude right) => new(left.vector * right.vector);
-    public static Force2 operator *(Magnitude left, Force2 right) => new(left.vector * right.vector);
-
-    public static Force3 operator *(Force3 left, Magnitude right) => new(left.vector * right.vector);
-    public static Force3 operator *(Magnitude left, Force3 right) => new(left.vector * right.vector);
-
     public static Time operator *(Time left, Magnitude right) => new(left.vector * right.vector);
     public static Time operator *(Magnitude left, Time right) => new(left.vector * right.vector);
+
+    public static Mass operator *(Mass left, Magnitude right) => new(left.vector * right.vector);
+    public static Mass operator *(Magnitude left, Mass right) => new(left.vector * right.vector);
 
     public static Position operator *(Position left, Magnitude right) => new(left.vector * right.vector);
     public static Position operator *(Magnitude left, Position right) => new(left.vector * right.vector);
@@ -37,6 +28,15 @@ public struct Magnitude : IAutoUnit {
 
     public static Position3 operator *(Position3 left, Magnitude right) => new(left.vector * right.vector);
     public static Position3 operator *(Magnitude left, Position3 right) => new(left.vector * right.vector);
+
+    public static Force operator *(Force left, Magnitude right) => new(left.vector * right.vector);
+    public static Force operator *(Magnitude left, Force right) => new(left.vector * right.vector);
+
+    public static Force2 operator *(Force2 left, Magnitude right) => new(left.vector * right.vector);
+    public static Force2 operator *(Magnitude left, Force2 right) => new(left.vector * right.vector);
+
+    public static Force3 operator *(Force3 left, Magnitude right) => new(left.vector * right.vector);
+    public static Force3 operator *(Magnitude left, Force3 right) => new(left.vector * right.vector);
 
     public static Angle operator *(Angle left, Magnitude right) => new(left.vector * right.vector);
     public static Angle operator *(Magnitude left, Angle right) => new(left.vector * right.vector);

@@ -20,11 +20,11 @@ public struct Direction2 : IAutoUnit2 {
     public static implicit operator Vector2(Direction2 v) => new Vector2(v.x, v.y);
     public Magnitude magnitude => new((float)Math.Sqrt((double)x * x + (double)y * y));
 
-    public static Force2 operator *(Force left, Direction2 right) => new(left.vector * right.vector);
-    public static Force2 operator *(Direction2 left, Force right) => new(left.vector * right.vector);
-
     public static Position2 operator *(Position left, Direction2 right) => new(left.vector * right.vector);
     public static Position2 operator *(Direction2 left, Position right) => new(left.vector * right.vector);
+
+    public static Force2 operator *(Force left, Direction2 right) => new(left.vector * right.vector);
+    public static Force2 operator *(Direction2 left, Force right) => new(left.vector * right.vector);
 
     public static Angle2 operator *(Angle left, Direction2 right) => new(left.vector * right.vector);
     public static Angle2 operator *(Direction2 left, Angle right) => new(left.vector * right.vector);

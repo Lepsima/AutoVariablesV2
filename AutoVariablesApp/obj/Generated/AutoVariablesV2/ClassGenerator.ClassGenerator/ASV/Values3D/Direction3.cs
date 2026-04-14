@@ -22,11 +22,11 @@ public struct Direction3 : IAutoUnit3 {
     public static implicit operator Vector3(Direction3 v) => new Vector3(v.x, v.y, v.z);
     public Magnitude magnitude => new((float)Math.Sqrt((double)x*x + (double)y*y + (double)z*z));
 
-    public static Force3 operator *(Force left, Direction3 right) => new(left.vector * right.vector);
-    public static Force3 operator *(Direction3 left, Force right) => new(left.vector * right.vector);
-
     public static Position3 operator *(Position left, Direction3 right) => new(left.vector * right.vector);
     public static Position3 operator *(Direction3 left, Position right) => new(left.vector * right.vector);
+
+    public static Force3 operator *(Force left, Direction3 right) => new(left.vector * right.vector);
+    public static Force3 operator *(Direction3 left, Force right) => new(left.vector * right.vector);
 
     public static Angle3 operator *(Angle left, Direction3 right) => new(left.vector * right.vector);
     public static Angle3 operator *(Direction3 left, Angle right) => new(left.vector * right.vector);
