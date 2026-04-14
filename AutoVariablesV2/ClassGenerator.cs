@@ -155,7 +155,7 @@ public class ClassGenerator : IIncrementalGenerator {
 		("Torque", "Force * Position"),
 	];
 	
-	private const string NAMESPACE = "Lepsima.ASV";
+	public const string NAMESPACE = "Lepsima.ASV";
 	
 	private static readonly Dictionary<string, Unit> units = new();
 
@@ -675,7 +675,8 @@ public class ClassGenerator : IIncrementalGenerator {
 		
 		foreach ((string _a, bool isMult, string b) in unit.conversions) {
 			string a = units[_a].GetName(d);
-			
+			bool isOneDim = unitDimensions[_a] == 1;
+
 			if (isMult && b.Equals("Time")) {
 				sb.AppendLine($"""
 				                   public static {UNIT} operator +({a} a, {UNIT} b) => b + a.{UNIT}(VTime.deltaTime);
@@ -729,16 +730,20 @@ public class ClassGenerator : IIncrementalGenerator {
 				
 				sb.AppendLine(GenerateConverter(A, B, RepeatPatternXYZ(repA, patternA)));
 				sb.AppendLine(GenerateConverter(B, A, RepeatPatternXYZ(repB, patternB)));
-				sb.AppendLine();
 			}
 			else {
 				if (!isMult) {
-					sb.AppendLine(GenerateConverter(U1, U2, RepeatPatternXYZ(d, "v.x * x")));
-					sb.AppendLine(GenerateConverter(U2, U1, RepeatPatternXYZ(d, "v.x / x")));
-					sb.AppendLine();
+					string _a2 = U1, _b2 = U2;
+
+					if (!isOneDim) {
+						_a2 = GetMaxDimension(_a, d);
+						_b2 = GetMaxDimension(b, d);
+					}
+					
+					sb.AppendLine(GenerateConverter(_a2, _b2, RepeatPatternXYZ(d, "v.x * x")));
+					sb.AppendLine(GenerateConverter(_b2, _a2, RepeatPatternXYZ(d, "v.x / x")));
 				}
 				else {
-					bool isOneDim = unitDimensions[_a] == 1;
 					string pattern1 = isOneDim ? "DONT_CHANGE / v.x" : "x / v.x";
 					string pattern2 = RepeatPatternXYZ(d, pattern1).Replace("DONT_CHANGE", "x");
 
@@ -751,12 +756,20 @@ public class ClassGenerator : IIncrementalGenerator {
 					
 					sb.AppendLine(GenerateConverter(_a2, _b2, pattern2));
 					sb.AppendLine(GenerateConverter(_b2, _a2, pattern2));
-					sb.AppendLine();
 				}
 			}
 
-			sb.AppendLine($"    public {UNIT}({a} a, {b} b) => a.{UNIT}(b);");
-			sb.AppendLine($"    public {UNIT}({b} b, {a} a) => a.{UNIT}(b);");
+			sb.AppendLine();
+
+			string _a3 = a, _b3 = b;
+
+			if (!isOneDim) {
+				_a3 = GetMaxDimension(_a, d);
+				_b3 = GetMaxDimension(b, d);
+			}
+			
+			sb.AppendLine($"    public {UNIT}({_a3} a, {_b3} b) => a.{UNIT}(b);");
+			sb.AppendLine($"    public {UNIT}({_b3} b, {_a3} a) => a.{UNIT}(b);");
 			sb.AppendLine();
 		}
 	}
