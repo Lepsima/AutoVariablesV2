@@ -101,7 +101,7 @@ public class ClassGenerator : IIncrementalGenerator {
 				scales = [
 					("deg", "Degree", 1),
 					("rad", "Radian", 0.01745329238474369),
-					("trn", "Turn", 360),
+					("turn", "Turn", 360),
 					("'", "MinuteDegree", 0.016666666666666666),
 					("''", "SecondDegree", 0.0002777777777777778),
 				],

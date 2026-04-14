@@ -4,17 +4,15 @@ using System.Linq;
 
 namespace ClassGenerator {
 public class UnitInfo(string name, string standardUnit, int dimensions) {
-	public string name = name;
-	public string standardUnit = standardUnit;
-	public int dimensions = dimensions;
+	public readonly string name = name;
+	public readonly int dimensions = dimensions;
+	private string unitName = "";
 		
 	public List<string> inspectorUnits = [];
 	public List<string> compoundInputs = [];
 	public List<(string, string)> conversions = [];
 	public List<(string, string, double)> scales = [];
-	
-	public string unitName = "";
-	public List<(string, bool, string)> conversionData = [];
+	public readonly List<(string, bool, string)> conversionData = [];
 	
 
 	public void Init() {
