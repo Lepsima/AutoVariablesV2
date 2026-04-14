@@ -65,7 +65,9 @@ public struct ForceAccel3_UI : IAutoUnitUI3 {
 
 public enum ForceAccel_UIType {
     [InspectorName("N/s")]
-    NewtonSecond,
+    Newtons_Second,
+    [InspectorName("kN/s")]
+    Kilonewtons_Second,
 
 }
 }

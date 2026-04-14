@@ -65,7 +65,13 @@ public struct Velocity3_UI : IAutoUnitUI3 {
 
 public enum Velocity_UIType {
     [InspectorName("m/s")]
-    MeterSecond,
+    Meters_Second,
+    [InspectorName("km/h")]
+    Kilometers_Hour,
+    [InspectorName("ft/s")]
+    Feets_Second,
+    [InspectorName("mi/h")]
+    Miles_Hour,
 
 }
 }

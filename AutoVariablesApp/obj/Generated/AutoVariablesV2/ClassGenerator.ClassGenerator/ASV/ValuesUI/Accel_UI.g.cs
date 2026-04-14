@@ -64,8 +64,6 @@ public struct Accel3_UI : IAutoUnitUI3 {
 }
 
 public enum Accel_UIType {
-    [InspectorName("m/s2")]
-    MeterSecondSecond,
 
 }
 }

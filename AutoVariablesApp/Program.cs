@@ -1,14 +1,14 @@
 ﻿using System;
-using Generated.Units;
+using Lepsima.ASV;
 
-namespace AutoVariablesApp {
+namespace Lepsima.ASV {
 internal abstract class Program {
 	private static void Main() {
-		Position3 pos = new(1f, 2f, 3f);
+		Position3 pos = Position3.Centimeter(10, 5, 12);
 		Velocity3 vel = new(1, 2, 3);
 		Accel3 accel = new(1, 5, 2);
 		Accel a = new(1);
-
+		
 		pos = pos + vel;
 		vel = vel + accel;
 

@@ -15,15 +15,15 @@ namespace ClassGenerator;
 [Generator]
 public class ClassGenerator : IIncrementalGenerator {
 	private static readonly List<(string, List<(string, string, double)>)> unitScales = [
-		("Position", [
-			("ft", "Feet", 3.280839895f),
-			("mi", "Mile", 1609.344f),
-			("mm", "Millimeter", 0.001),
-			("cm", "Centimeter", 0.01),
-			("m", "Meter", 1),
-			("km", "Kilometer", 1000),
-			("Mm", "Megameter", 1000000),
+		// Utils
+		("Direction", [
+			("dir", "Normal", 1),
 		]),
+		("Magnitude", [
+			("mag", "Number", 1),
+		]),
+		
+		// Base units
 		("Mass", [
 			("mg", "Milligram", 0.000001),
 			("g", "Gram", 0.001),
@@ -43,17 +43,43 @@ public class ClassGenerator : IIncrementalGenerator {
 			("s", "Second", 1),
 			("m", "Minute", 60),
 			("h", "Hour", 3600),
+		]),
+		
+		// Physical units
+		("Position", [
+			("ft", "Feet", 3.280839895),
+			("mi", "Mile", 1609.344),
+			("mm", "Millimeter", 0.001),
+			("cm", "Centimeter", 0.01),
+			("m", "Meter", 1),
+			("km", "Kilometer", 1000),
+			("Mm", "Megameter", 1000000),
+		]),
+		("Angle", [
+			("deg", "Degree", 1),
+			("rad", "Radian", 0.01745329238474369),
+			("trn", "Turn", 360),
+			("'", "MinuteDegree", 0.016666666666666666),
+			("''", "SecondDegree", 0.0002777777777777778),
 		])
 	];
 
 	private static readonly Dictionary<string, string> standardUnits = new() {
-		{"Position", "m"},
+		{"Direction", "dir"},
+		{"Magnitude", "mag"},
+		
 		{"Mass", "kg"},
-		{"Force", "N"},
 		{"Time", "s"},
+		
+		{"Position", "m"},
 		{"Velocity", "m/s"},
 		{"Accel", "m/s2"},
+		{"Force", "N"},
 		{"ForceAccel", "N/s"},
+		
+		{"Angle", "deg"},
+		{"AngleVel", "deg/s"},
+		{"AngleAccel", "deg/s2"},
 	};
 	
 	private static readonly Dictionary<string, string[]> unitInspectorValues = new() {
@@ -64,6 +90,11 @@ public class ClassGenerator : IIncrementalGenerator {
 		{"Velocity", ["m/s", "km/h", "ft/s", "mi/h"]},
 		{"Accel", ["m/s2", "km/h2", "ft/s2", "mi/h2"]},
 		{"ForceAccel", ["N/s", "kN/s"]},
+		{"Angle", ["deg", "rad"]},
+		{"AngleVel", ["deg/s", "deg/m", "rad/s", "rad/m"]},
+		{"AngleAccel", ["deg/s2", "deg/m2", "rad/s2", "rad/m2"]},
+		{"Direction", ["dir"]},
+		{"Magnitude", ["mag"]},
 	};
 	
 	private static readonly Dictionary<string, int> unitDimensions = new() {
@@ -72,6 +103,11 @@ public class ClassGenerator : IIncrementalGenerator {
 		{"Accel", 3},
 		{"Force", 3},
 		{"ForceAccel", 3},
+		{"Angle", 3},
+		{"AngleVel", 3},
+		{"AngleAccel", 3},
+		{"Direction", 3},
+		{"Magnitude", 1},
 		{"Time", 1},
 		{"Mass", 1},
 	};
@@ -80,19 +116,27 @@ public class ClassGenerator : IIncrementalGenerator {
 	private static readonly List<(string, string, string)> unitConversions = [
 		("Position", "Velocity", "Time"),
 		("Velocity", "Accel", "Time"),
+		
 		("Force", "Accel", "Mass"),
 		("Force", "ForceAccel", "Time"),
+		
+		("Angle", "AngleVel", "Time"),
+		("AngleVel", "AngleAccel", "Time"),
 	];
 	
 	// How can the user create units (fixed formula)
 	private static readonly List<(string, string)> compoundUnitInputs = [
 		("Velocity", "Position / Time"),
 		("Accel", "Velocity / Time"),
+		
 		("Accel", "Force * Mass"),
 		("ForceAccel", "Force / Time"),
+		
+		("AngleVel", "Angle / Time"),
+		("AngleAccel", "AngleVel / Time"),
 	];
 	
-	private const string NAMESPACE = "Generated.Units";
+	private const string NAMESPACE = "Lepsima.ASV";
 	
 	private static readonly Dictionary<string, Unit> units = new();
 
@@ -100,7 +144,7 @@ public class ClassGenerator : IIncrementalGenerator {
 		public readonly bool isSimple;
 		public readonly string name;
 		public readonly string unitName;
-		private readonly List<(string, string, double)> scales = [];
+		public readonly List<(string, string, double)> scales = [];
 		public readonly List<(string, bool, string)> conversions = [];
 		
 		public Unit(string name) {
@@ -142,7 +186,7 @@ public class ClassGenerator : IIncrementalGenerator {
 
 					string symbol = isMultiplication ? "*" : "/";
 					string unit = $"{unitA}{symbol}{unitB}";
-					string unitFull = nameA.EndsWith(nameB) ? nameA + "2" : $"{nameA}s_{nameB}";
+					string unitFull = nameA.EndsWith(nameB) ? nameA + "2" : $"{nameA}sPer{nameB}";
 					
 					newScales.Add((unit, unitFull, scale));
 				}	
@@ -236,7 +280,7 @@ public class ClassGenerator : IIncrementalGenerator {
 					  """.Replace("NAMESPACE", NAMESPACE);
 		
 		SourceText source = SourceText.From(file, Encoding.UTF8);
-		context.AddSource("ASV/Utils/Interfaces.g.cs", source);
+		context.AddSource("ASV/Utils/Interfaces.cs", source);
 	}
 
 	private static void GenerateClasses(SourceProductionContext context) {
@@ -245,6 +289,10 @@ public class ClassGenerator : IIncrementalGenerator {
 			int dim = unitDimensions[unit.name];
 
 			for (int i = 0; i < dim; i++) {
+				if (i == 0 && unit.name.Equals("Direction")) {
+					continue;
+				}
+				
 				SourceText source = GenerateUnitClass(unit, i);
 				string name = keyValuePair.Key + GetVectorFloatDimension(i);
 
@@ -255,79 +303,80 @@ public class ClassGenerator : IIncrementalGenerator {
 					_ => "ERROR/"
 				};
 				
-				context.AddSource($"ASV/{folder}{name}.g.cs", source);
+				context.AddSource($"ASV/{folder}{name}.cs", source);
 			}
 			
 			SourceText sourceUI = GenerateUnitUIClass(unit, dim);
-			context.AddSource($"ASV/ValuesUI/{keyValuePair.Key}_UI.g.cs", sourceUI);
+			context.AddSource($"ASV/ValuesUI/{keyValuePair.Key}UI.cs", sourceUI);
 		}
 	}
 	
 	private static SourceText GenerateUnitClass(Unit unit, int d) {
 		StringBuilder sb = new();
 		
-		try {
-			GenerateUnitData(sb, unit, d);
-		
-			GenerateUnitScales(sb, unit, d);
-			GenerateUnitConversions(sb, unit, d);
-		}
-		catch (Exception e) {
-			Console.WriteLine(e);
-		}
+		GenerateUnitData(sb, unit, d);
+		GenerateUnitSpecials(sb, unit, d);
+		GenerateUnitScales(sb, unit, d);
+		GenerateUnitConversions(sb, unit, d);
 		
 		sb.AppendLine("}");
 		sb.AppendLine("}");
+		
 		return SourceText.From(sb.ToString(), Encoding.UTF8);
 	}
 	
 	private static SourceText GenerateUnitUIClass(Unit unit, int d) {
 		StringBuilder sb = new();
 		
-		const string PATTERN1 = """
+		const string PATTERN0 = """
 		                        using System;
-		                        using AutoVariablesApp;
+		                        using UnityEngine;
+		                        
 		                        namespace NAMESPACE {
+		                        """;
+		
+		const string PATTERN1 = """
+		                        
 		                        [System.Serializable]
-		                        public struct UNIT_UI : INTERFACE {
+		                        public struct UNITUI : INTERFACE {
 		                            public float x;
-		                            public UNIT_UIType type;
+		                            public UNITUIType type;
 		                            
 		                            public UNIT Value => this;
 		                            
-		                            public UNIT_UI(float x) {
+		                            public UNITUI(float x) {
 		                                this.x = x;
 		                            }
 		                            
-		                            public static implicit operator float(UNIT_UI v) => v.x;
-		                            public static implicit operator UNIT(UNIT_UI v) => new(v.x);
-		                            public UNIT magnitude => new(x);
+		                            public static implicit operator float(UNITUI v) => v.x;
+		                            public static implicit operator UNIT(UNITUI v) => new(v.x);
+		                            public SPECIAL magnitude => new(x);
 		                        }
+		                        
 		                        """;
 		
 		const string PATTERN2 = """       
 		                        
-		                        
 		                        [System.Serializable]
-		                        public struct UNIT2_UI : INTERFACE2 {
+		                        public struct UNIT2UI : INTERFACE2 {
 		                            public float x, y;
-		                            public UNIT_UIType type;
+		                            public UNITUIType type;
 		                            
 		                            public UNIT2 Value => this;
 		                            
-		                            public UNIT2_UI(float x, float y) {
+		                            public UNIT2UI(float x, float y) {
 		                                this.x = x;
 		                                this.y = y;
 		                            }
 		                            
-		                            public UNIT2_UI(Vector2 v2) {
+		                            public UNIT2UI(Vector2 v2) {
 		                              x = v2.x;
 		                              y = v2.y;
 		                            }
 		                          
-		                            public static implicit operator Vector2(UNIT2_UI v) => new(v.x, v.y);
-		                            public static implicit operator UNIT2(UNIT2_UI v) => new(v.x, v.y);
-		                            public UNIT magnitude => new((float)Math.Sqrt((double)x * x + (double)y * y));
+		                            public static implicit operator Vector2(UNIT2UI v) => new(v.x, v.y);
+		                            public static implicit operator UNIT2(UNIT2UI v) => new(v.x, v.y);
+		                            public SPECIAL magnitude => new((float)Math.Sqrt((double)x * x + (double)y * y));
 		                        }
 		                        """;
         
@@ -335,37 +384,43 @@ public class ClassGenerator : IIncrementalGenerator {
 		                        
 		                        
 		                        [System.Serializable]
-		                        public struct UNIT3_UI : INTERFACE3 {
+		                        public struct UNIT3UI : INTERFACE3 {
 		                            public float x, y, z;
-		                            public UNIT_UIType type;
+		                            public UNITUIType type;
 		                            
 		                            public UNIT3 Value => this;
 		                            
-		                            public UNIT3_UI(float x, float y, float z) {
+		                            public UNIT3UI(float x, float y, float z) {
 		                                this.x = x;
 		                                this.y = y;
 		                                this.z = z;
 		                            }
 		                        
-		                            public UNIT3_UI(Vector3 v3) {
+		                            public UNIT3UI(Vector3 v3) {
 		                              x = v3.x;
 		                              y = v3.y;
 		                              z = v3.z;
 		                            }
 		                        
-		                            public static implicit operator Vector3(UNIT3_UI v) => new(v.x, v.y, v.z);
-		                            public static implicit operator UNIT3(UNIT3_UI v) => new(v.x, v.y, v.z);
-		                            public UNIT magnitude => new((float)Math.Sqrt((double)x*x + (double)y*y + (double)z*z));
+		                            public static implicit operator Vector3(UNIT3UI v) => new(v.x, v.y, v.z);
+		                            public static implicit operator UNIT3(UNIT3UI v) => new(v.x, v.y, v.z);
+		                            public SPECIAL magnitude => new((float)Math.Sqrt((double)x*x + (double)y*y + (double)z*z));
 		                        }
 		                        """;
 
-		string PATTERN = PATTERN1;
+		string PATTERN = PATTERN0;
+
+		bool isDir = unit.name.Equals("Direction");
+		if (!isDir) PATTERN += PATTERN1;
 		if (d > 1) PATTERN += PATTERN2;
 		if (d > 2) PATTERN += PATTERN3;
 		
 		string UNIT = unit.name;
+		string SPECIAL = isDir ? "Magnitude" : UNIT;
+		
 		sb.AppendLine(PATTERN
 			.Replace("UNIT", UNIT)
+			.Replace("SPECIAL", SPECIAL)
 			.Replace("NAMESPACE", NAMESPACE)
 			.Replace("INTERFACE", "IAutoUnitUI"));
 
@@ -377,7 +432,7 @@ public class ClassGenerator : IIncrementalGenerator {
 		StringBuilder allPatterns = new();
 		
 		foreach (string scale in unitInspectorValues[unit.name]) {
-			string scaleName = unit.GetScales().FirstOrDefault(t => t.Item1.Equals(scale)).Item2;
+			string scaleName = unit.scales.FirstOrDefault(t => t.Item1.Equals(scale)).Item2;
 			if (scaleName == null) continue;
 			
 			allPatterns.AppendLine(
@@ -389,7 +444,7 @@ public class ClassGenerator : IIncrementalGenerator {
 
 		const string PATTERN5 = """
 
-		                        public enum UNIT_UIType {
+		                        public enum UNITUIType {
 		                        PATTERN4
 		                        }
 		                        """;
@@ -410,8 +465,11 @@ public class ClassGenerator : IIncrementalGenerator {
 		                            public UNIT(float x) {
 		                                this.x = x;
 		                            }
+		                            
+		                            public float vector => x;
+		                            
 		                            public static implicit operator float(UNIT v) => v.x;
-		                            public NAME magnitude => new(x);
+		                            public SPECIAL magnitude => new(x);
 		                        """;
 
 		const string PATTERN2 = """
@@ -427,8 +485,10 @@ public class ClassGenerator : IIncrementalGenerator {
 		                                y = v2.y;
 		                            }
 		                        
+		                            public Vector2 vector => this;
+		                        
 		                            public static implicit operator Vector2(UNIT v) => new Vector2(v.x, v.y);
-		                            public NAME magnitude => new((float)Math.Sqrt((double)x * x + (double)y * y));
+		                            public SPECIAL magnitude => new((float)Math.Sqrt((double)x * x + (double)y * y));
 		                        """;
 		
 		const string PATTERN3 = """
@@ -446,13 +506,17 @@ public class ClassGenerator : IIncrementalGenerator {
 		                                z = v3.z;
 		                            }
 		                            
+		                            public Vector3 vector => this;
+		                            
 		                            public static implicit operator Vector3(UNIT v) => new Vector3(v.x, v.y, v.z);
-		                            public NAME magnitude => new((float)Math.Sqrt((double)x*x + (double)y*y + (double)z*z));
+		                            public SPECIAL magnitude => new((float)Math.Sqrt((double)x*x + (double)y*y + (double)z*z));
 		                        """;
+
 
 		sb.Append("""
 		          using System;
-		          using AutoVariablesApp;
+		          using UnityEngine;
+		          
 		          namespace NAMESPACE {
 		          public struct UNIT : INTERFACE {
 		          
@@ -462,13 +526,78 @@ public class ClassGenerator : IIncrementalGenerator {
 			.Replace("INTERFACE", "IAutoUnit" + GetVectorFloatDimension(d))
 		);
 		
+		bool isDir = unit.name.Equals("Direction");
+		string SPECIAL = isDir ? "Magnitude" : unit.name;
+		
 		sb.Append((d switch {
 			1 => PATTERN2,
 			2 => PATTERN3,
 			_ => PATTERN1
-		}).Replace("UNIT", UNIT).Replace("NAME", unit.name));
+		})
+			.Replace("UNIT", UNIT)
+			.Replace("SPECIAL", SPECIAL)
+			.Replace("NAME", unit.name)
+			);
 	}
 
+	private static void GenerateUnitSpecials(StringBuilder sb, Unit unit, int d) {
+		const string PATTERN1 = """
+		                        
+		                        
+		                            public static UNIT operator *(UNIT left, Magnitude right) => new(left.vector * right.vector);
+		                            public static UNIT operator *(Magnitude left, UNIT right) => new(left.vector * right.vector);
+		                        """;
+
+		const string PATTERN2 = """
+		                        
+		                        
+		                            public static UNIT operator *(SECOND left, DIRECTION right) => new(left.vector * right.vector);
+		                            public static UNIT operator *(DIRECTION left, SECOND right) => new(left.vector * right.vector);
+		                        """;
+
+
+		switch (unit.name) {
+			case "Magnitude": {
+				foreach (KeyValuePair<string,Unit> pair in units) {
+					Unit other = pair.Value;
+					int dim = unitDimensions[other.name];
+
+					if (other.name.Equals("Magnitude") || other.name.Equals("Direction")) {
+						continue;
+					}
+					
+					for (int i = 0; i < dim; i++) {
+						sb.Append(PATTERN1.Replace("UNIT", other.GetName(i)));
+					}
+				}
+				break;
+			}
+			
+			case "Direction": {
+				if (d == 0) return;
+				
+				foreach (KeyValuePair<string,Unit> pair in units) {
+					Unit other = pair.Value;
+					int dim = unitDimensions[other.name];
+
+					if (other.name.Equals("Magnitude") || other.name.Equals("Direction")) {
+						continue;
+					}
+
+					if (dim > d) {
+						sb.Append(PATTERN2
+							.Replace("UNIT", other.GetName(d))
+							.Replace("SECOND", other.GetName(0))
+							.Replace("DIRECTION",  unit.GetName(d))
+						);
+					}
+				}
+				break;
+			}
+			
+		}
+	}
+	
 	private static void GenerateUnitScales(StringBuilder sb, Unit unit, int d) {
 		string PATTERN = """
 
@@ -491,7 +620,7 @@ public class ClassGenerator : IIncrementalGenerator {
 		
 		string UNIT = unit.GetName(d);
 		
-		foreach ((string name, string fullName, double value)  in unit.GetScales()) {
+		foreach ((string name, string fullName, double value)  in unit.scales) {
 			string SUB_PATTERN = PATTERN
 				.Replace("VECTOR", GetVector(d))
 				.Replace("PATTERN1", RepeatPatternXYZ(d, PATTERN1))
@@ -527,13 +656,12 @@ public class ClassGenerator : IIncrementalGenerator {
 			string a = units[_a].GetName(d);
 			
 			if (isMult && b.Equals("Time")) {
-				string U = UNIT;
 				sb.AppendLine($"""
-
-				                   public static {U} operator +({a} a, {U} b) => b + a.{U}(VTime.deltaTime);
-				                   public static {U} operator +({U} b, {a} a) => b + a.{U}(VTime.deltaTime);
-				                   public static {U} operator -({a} a, {U} b) => a.{U}(VTime.deltaTime) - b;
-				                   public static {U} operator -({U} b, {a} a) => b - a.{U}(VTime.deltaTime);
+				               
+				                   public static {UNIT} operator +({a} a, {UNIT} b) => b + a.{UNIT}(VTime.deltaTime);
+				                   public static {UNIT} operator +({UNIT} b, {a} a) => b + a.{UNIT}(VTime.deltaTime);
+				                   public static {UNIT} operator -({a} a, {UNIT} b) => a.{UNIT}(VTime.deltaTime) - b;
+				                   public static {UNIT} operator -({UNIT} b, {a} a) => b - a.{UNIT}(VTime.deltaTime);
 				                   
 				               """);
 			}

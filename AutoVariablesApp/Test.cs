@@ -1,4 +1,6 @@
-﻿namespace Generated.Units {
+﻿using Lepsima.ASV;
+
+namespace UnityEngine {
 public struct Vector3 {
 	public float x, y, z;
 	public Vector3(float x, float y, float z) {
@@ -8,6 +10,10 @@ public struct Vector3 {
 	}
 	
 	public float magnitude => x * x + y * y + z * z;
+
+
+	public static Vector3 operator *(Vector3 left, float right) => left;
+	public static Vector3 operator *(float left, Vector3 right) => right;
 }
 
 public struct Vector2 {
@@ -18,6 +24,10 @@ public struct Vector2 {
 	}
 	
 	public float magnitude => x * x + y * y;
+	
+	
+	public static Vector2 operator *(Vector2 left, float right) => left;
+	public static Vector2 operator *(float left, Vector2 right) => right;
 }
 
 public static class VTime {
