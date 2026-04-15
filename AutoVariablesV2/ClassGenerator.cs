@@ -12,7 +12,7 @@ namespace ClassGenerator;
 
 [Generator]
 public class ClassGenerator : IIncrementalGenerator {
-	public const string NAMESPACE = "Lepsima.ASV";
+	private const string NAMESPACE = "Lepsima.ASV";
 
 	public static readonly Dictionary<string, UnitInfo> units = new() {
 		{
@@ -73,7 +73,7 @@ public class ClassGenerator : IIncrementalGenerator {
 				compoundInputs = ["Position / Time"]
 			}
 		}, {
-			"Accel", new UnitInfo("Accel", "m/s2", 3) {
+			"Accel", new UnitInfo("Accel", "m/s/s", 3) {
 				inspectorUnits = ["m/s2", "km/h2", "ft/s2", "mi/h2"],
 				compoundInputs = ["Velocity / Time", "Force * Mass"]
 			}
@@ -120,7 +120,7 @@ public class ClassGenerator : IIncrementalGenerator {
 				compoundInputs = ["AngleVel / Time", "Torque * Mass"]
 			}
 		}, {
-			"Torque", new UnitInfo("Torque", "N/m", 3) {
+			"Torque", new UnitInfo("Torque", "N*m", 3) {
 				scales = [
 					("mN", "Millinewton", 0.001),
 					("N", "Newton", 1),
@@ -132,12 +132,12 @@ public class ClassGenerator : IIncrementalGenerator {
 					("TorqueAccel", "Time"),
 					("Force", "Position")
 				],
-				inspectorUnits = ["N/m", "kN/m"],
+				inspectorUnits = ["N*m", "kN*m"],
 				compoundInputs = ["Force * Position"]
 			}
 		}, {
-			"TorqueAccel", new UnitInfo("TorqueAccel", "N/m/s", 3) {
-				inspectorUnits = ["N/m/s", "kN/m/s"],
+			"TorqueAccel", new UnitInfo("TorqueAccel", "N*m/s", 3) {
+				inspectorUnits = ["N*m/s", "kN*m/s"],
 				compoundInputs = ["Torque / Time"]
 			}
 		}, 
@@ -228,6 +228,7 @@ public class ClassGenerator : IIncrementalGenerator {
 		                            
 		                            public UNITUI(float x) {
 		                                this.x = x;
+		                                type = UNITUIType.DEFAULT_TYP;
 		                            }
 		                            
 		                            public static implicit operator float(UNITUI v) => v.x;
@@ -249,11 +250,13 @@ public class ClassGenerator : IIncrementalGenerator {
 		                            public UNIT2UI(float x, float y) {
 		                                this.x = x;
 		                                this.y = y;
+		                                type = UNITUIType.DEFAULT_TYP;
 		                            }
 		                            
 		                            public UNIT2UI(Vector2 v2) {
-		                              x = v2.x;
-		                              y = v2.y;
+		                                x = v2.x;
+		                                y = v2.y;
+		                                type = UNITUIType.DEFAULT_TYP;
 		                            }
 		                          
 		                            public static implicit operator Vector2(UNIT2UI v) => new(v.x, v.y);
@@ -276,12 +279,14 @@ public class ClassGenerator : IIncrementalGenerator {
 		                                this.x = x;
 		                                this.y = y;
 		                                this.z = z;
+		                                type = UNITUIType.DEFAULT_TYP;
 		                            }
 		                        
 		                            public UNIT3UI(Vector3 v3) {
-		                              x = v3.x;
-		                              y = v3.y;
-		                              z = v3.z;
+		                                x = v3.x;
+		                                y = v3.y;
+		                                z = v3.z;
+		                                type = UNITUIType.DEFAULT_TYP;
 		                            }
 		                        
 		                            public static implicit operator Vector3(UNIT3UI v) => new(v.x, v.y, v.z);
@@ -299,12 +304,15 @@ public class ClassGenerator : IIncrementalGenerator {
 		
 		string UNIT = unit.name;
 		string SPECIAL = isDir ? "Magnitude" : UNIT;
+		string default_type = unit.inspectorUnits.Count > 0 ? unit.GetScaleName(unit.inspectorUnits[0]) : "ERROR";
 		
 		sb.AppendLine(PATTERN
 			.Replace("UNIT", UNIT)
 			.Replace("SPECIAL", SPECIAL)
 			.Replace("NAMESPACE", NAMESPACE)
-			.Replace("INTERFACE", "IAutoUnitUI"));
+			.Replace("INTERFACE", "IAutoUnitUI")
+			.Replace("DEFAULT_TYP", default_type)
+		);
 
 		const string PATTERN4 = """
 		                            [InspectorName("UNIT")]
@@ -464,13 +472,13 @@ public class ClassGenerator : IIncrementalGenerator {
 
 		                 
 		                     public VECTOR ToSCALE_NAME() => PATTERN4;
-		                     public static UNIT SCALE_NAME(PATTERN1) => new UNIT(PATTERN2);
+		                     public static UNIT SCALE_NAME(PATTERN1) => new(PATTERN2);
 		                 """;
 
 		if (d != 0) {
 			PATTERN += """
 			           
-			               public static UNIT SCALE_NAME(VECTOR v) => new UNIT(PATTERN3);
+			               public static UNIT SCALE_NAME(VECTOR v) => new(PATTERN3);
 			           """;
 		}
 
@@ -486,7 +494,7 @@ public class ClassGenerator : IIncrementalGenerator {
 				.Replace("PATTERN1", RepeatPatternXYZ(d, PATTERN1))
 				.Replace("PATTERN2", RepeatPatternXYZ(d, PATTERN2))
 				.Replace("PATTERN3", RepeatPatternXYZ(d, PATTERN3))
-				.Replace("PATTERN4", NewVector(d, RepeatPatternXYZ(d, PATTERN4)));
+				.Replace("PATTERN4", NewVectorEmpty(d, RepeatPatternXYZ(d, PATTERN4)));
 			
 			string SCALE_NAME = fullName;
 			string SCALE_VALUE = value.ToString("G10", CultureInfo.InvariantCulture) + "f";
@@ -609,8 +617,8 @@ public class ClassGenerator : IIncrementalGenerator {
 				_b3 = GetMaxDimension(b, d);
 			}
 			
-			sb.AppendLine($"    public {UNIT}({_a3} a, {_b3} b) => a.{UNIT}(b);");
-			sb.AppendLine($"    public {UNIT}({_b3} b, {_a3} a) => a.{UNIT}(b);");
+			sb.AppendLine($"    public {UNIT}({_a3} a, {_b3} b) : this(a.{UNIT}(b)) {{ }}");
+			sb.AppendLine($"    public {UNIT}({_b3} b, {_a3} a) : this(a.{UNIT}(b)) {{ }}");
 			sb.AppendLine();
 		}
 	}
@@ -649,7 +657,16 @@ public class ClassGenerator : IIncrementalGenerator {
 		return dim switch {
 			0 => pattern,
 			1 => $"new Vector2({pattern})",
+			69 => $"new({pattern})",
 			_ => $"new Vector3({pattern})"
+		};
+	}
+	
+	
+	private static string NewVectorEmpty(int dim, string pattern) {
+		return dim switch {
+			0 => pattern,
+			_ => $"new({pattern})",
 		};
 	}
 

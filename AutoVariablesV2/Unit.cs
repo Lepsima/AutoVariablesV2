@@ -59,8 +59,10 @@ public class UnitInfo(string name, string standardUnit, int dimensions) {
 					: valueA / valueB;
 
 				string symbol = isMultiplication ? "*" : "/";
-				string unit = $"{unitA}{symbol}{unitB}";
-				string unitFull = nameA.EndsWith(nameB) ? nameA + "2" : $"{nameA}sPer{nameB}";
+				bool stack = nameA.EndsWith(nameB);
+				
+				string unit = stack ? unitA + "2" : $"{unitA}{symbol}{unitB}";
+				string unitFull = stack ? nameA + "2" : $"{nameA}sPer{nameB}";
 					
 				newScales.Add((unit, unitFull, scale));
 			}	
@@ -84,7 +86,9 @@ public class UnitInfo(string name, string standardUnit, int dimensions) {
 	}
 
 	private void AddScales(List<(string, string, double)> newScales) {
-		scales.AddRange(newScales);
+		foreach ((string, string, double) scale in newScales.Where(scale => !scales.Contains(scale))) {
+			scales.Add(scale);
+		}
 	}
 }
 }

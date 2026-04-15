@@ -11,6 +11,7 @@ internal abstract class Program {
 		
 		pos = pos + vel;
 		vel = vel + accel;
+		accel = accel + accel;
 
 		Position distance = Position.Millimeter(62_865);
 		float km = distance.ToKilometer();
