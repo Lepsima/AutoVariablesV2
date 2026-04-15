@@ -23,7 +23,7 @@ public class ClassGenerator : IIncrementalGenerator {
 				inspectorUnits = ["mag"],
 			}
 		}, {
-			"Direction", new UnitInfo("Direction", "dir", 1) {
+			"Direction", new UnitInfo("Direction", "dir", 3) {
 				scales = [
 					("dir", "Normal", 1),
 					("dir", "Dir", 1)
@@ -359,7 +359,6 @@ public class ClassGenerator : IIncrementalGenerator {
 		                            public float vector => x;
 		                            
 		                            public static implicit operator float(UNIT v) => v.x;
-		                            public SPECIAL magnitude => new(x);
 		                        """;
 
 		const string PATTERN2 = """
@@ -377,8 +376,9 @@ public class ClassGenerator : IIncrementalGenerator {
 		                        
 		                            public Vector2 vector => this;
 		                        
-		                            public static implicit operator Vector2(UNIT v) => new Vector2(v.x, v.y);
-		                            public SPECIAL magnitude => new((float)Math.Sqrt((double)x * x + (double)y * y));
+		                            public Direction2 normalized => new(vector.normalized);
+		                            public SPECIAL sqrMagnitude => new(vector.sqrMagnitude);
+		                            public SPECIAL magnitude => new(vector.magnitude);
 		                        """;
 		
 		const string PATTERN3 = """
@@ -399,7 +399,10 @@ public class ClassGenerator : IIncrementalGenerator {
 		                            public Vector3 vector => this;
 		                            
 		                            public static implicit operator Vector3(UNIT v) => new Vector3(v.x, v.y, v.z);
-		                            public SPECIAL magnitude => new((float)Math.Sqrt((double)x*x + (double)y*y + (double)z*z));
+		                            
+		                            public Direction3 normalized => new(vector.normalized);
+		                            public SPECIAL sqrMagnitude => new(vector.sqrMagnitude);
+		                            public SPECIAL magnitude => new(vector.magnitude);
 		                        """;
 
 
