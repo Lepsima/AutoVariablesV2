@@ -231,9 +231,13 @@ public class ClassGenerator : IIncrementalGenerator {
 		                                type = UNITUIType.DEFAULT_TYP;
 		                            }
 		                            
-		                            public static implicit operator float(UNITUI v) => v.x;
-		                            public static implicit operator UNIT(UNITUI v) => new(v.x);
-		                            public SPECIAL magnitude => new(x);
+		                            public static implicit operator float(UNITUI v) => v.Value;
+		                            public static implicit operator UNIT(UNITUI v) {
+		                        	    return v.type switch {
+		                        PATTERN6
+		                        		    _ => new UNIT(v.Value)
+		                        	    };
+		                            }
 		                        }
 		                        
 		                        """;
@@ -259,9 +263,13 @@ public class ClassGenerator : IIncrementalGenerator {
 		                                type = UNITUIType.DEFAULT_TYP;
 		                            }
 		                          
-		                            public static implicit operator Vector2(UNIT2UI v) => new(v.x, v.y);
-		                            public static implicit operator UNIT2(UNIT2UI v) => new(v.x, v.y);
-		                            public SPECIAL magnitude => new((float)Math.Sqrt((double)x * x + (double)y * y));
+		                            public static implicit operator Vector2(UNIT2UI v) => v.Value;
+		                            public static implicit operator UNIT2(UNIT2UI v) {
+		                        	    return v.type switch {
+		                        PATTERN7
+		                        		    _ => new UNIT2(v.Value)
+		                        	    };
+		                            }
 		                        }
 		                        """;
         
@@ -289,14 +297,19 @@ public class ClassGenerator : IIncrementalGenerator {
 		                                type = UNITUIType.DEFAULT_TYP;
 		                            }
 		                        
-		                            public static implicit operator Vector3(UNIT3UI v) => new(v.x, v.y, v.z);
-		                            public static implicit operator UNIT3(UNIT3UI v) => new(v.x, v.y, v.z);
-		                            public SPECIAL magnitude => new((float)Math.Sqrt((double)x*x + (double)y*y + (double)z*z));
+		                            public static implicit operator Vector3(UNIT3UI v) => v.Value;
+		                            public static implicit operator UNIT3(UNIT3UI v) {
+		                        	    return v.type switch {
+		                        PATTERN8
+		                        		    _ => new UNIT3(v.Value)
+		                        	    };
+		                            }
 		                        }
 		                        """;
 
 		string PATTERN = PATTERN0;
-
+		
+		
 		bool isDir = unit.name.Equals("Direction");
 		if (!isDir) PATTERN += PATTERN1;
 		if (unit.dimensions > 1) PATTERN += PATTERN2;
@@ -306,14 +319,32 @@ public class ClassGenerator : IIncrementalGenerator {
 		string SPECIAL = isDir ? "Magnitude" : UNIT;
 		string default_type = unit.inspectorUnits.Count > 0 ? unit.GetScaleName(unit.inspectorUnits[0]) : "ERROR";
 		
+		StringBuilder sb6 = new(), sb7 = new(), sb8 = new();
+		
+		foreach (string inspectorUnit in unit.inspectorUnits) {
+			string inspectorName = unit.GetScaleName(inspectorUnit);
+			if (inspectorName == null) continue;
+			
+			string pat6 = $"	        {UNIT}UIType.{inspectorName} => {UNIT}.{inspectorName}(v.x),";
+			string pat7 = $"	        {UNIT}UIType.{inspectorName} => {UNIT}2.{inspectorName}(v.x, v.y),";
+			string pat8 = $"	        {UNIT}UIType.{inspectorName} => {UNIT}3.{inspectorName}(v.x, v.y, v.z),";
+			
+			sb6.AppendLine(pat6);
+			sb7.AppendLine(pat7);
+			sb8.AppendLine(pat8);
+		}
+		
 		sb.AppendLine(PATTERN
+			.Replace("PATTERN6", sb6.ToString())
+			.Replace("PATTERN7", sb7.ToString())
+			.Replace("PATTERN8", sb8.ToString())
 			.Replace("UNIT", UNIT)
 			.Replace("SPECIAL", SPECIAL)
 			.Replace("NAMESPACE", NAMESPACE)
 			.Replace("INTERFACE", "IAutoUnitUI")
 			.Replace("DEFAULT_TYP", default_type)
 		);
-
+		
 		const string PATTERN4 = """
 		                            [InspectorName("UNIT")]
 		                            UNIT_NAME,
@@ -328,7 +359,7 @@ public class ClassGenerator : IIncrementalGenerator {
 			allPatterns.AppendLine(
 				PATTERN4
 					.Replace("UNIT_NAME", inspectorName)
-					.Replace("UNIT", inspectorUnit)
+					.Replace("UNIT", inspectorUnit.Replace("/", "\u2571"))
 			);
 		}
 
@@ -338,6 +369,8 @@ public class ClassGenerator : IIncrementalGenerator {
 		                        PATTERN4
 		                        }
 		                        """;
+		
+
 
 		sb.AppendLine(PATTERN5
 			.Replace("PATTERN4", allPatterns.ToString())
@@ -375,8 +408,9 @@ public class ClassGenerator : IIncrementalGenerator {
 		                            }
 		                        
 		                            public Vector2 vector => this;
+		                            public static implicit operator Vector2(UNIT v) => new(v.x, v.y);
 		                        
-		                            public Direction2 normalized => new(vector.normalized);
+		                            public Direction3 normalized => new(vector.normalized);
 		                            public SPECIAL sqrMagnitude => new(vector.sqrMagnitude);
 		                            public SPECIAL magnitude => new(vector.magnitude);
 		                        """;
@@ -397,8 +431,7 @@ public class ClassGenerator : IIncrementalGenerator {
 		                            }
 		                            
 		                            public Vector3 vector => this;
-		                            
-		                            public static implicit operator Vector3(UNIT v) => new Vector3(v.x, v.y, v.z);
+		                            public static implicit operator Vector3(UNIT v) => new(v.x, v.y, v.z);
 		                            
 		                            public Direction3 normalized => new(vector.normalized);
 		                            public SPECIAL sqrMagnitude => new(vector.sqrMagnitude);
